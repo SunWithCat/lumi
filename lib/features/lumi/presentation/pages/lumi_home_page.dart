@@ -38,8 +38,11 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
     // 等待设置加载完成
     final settings = await ref.read(appSettingsProvider.notifier).waitForLoad();
     final resolution = settings.renderQuality.resolution;
-    
-    final success = await _live2dController.initialize(width: resolution, height: resolution);
+
+    final success = await _live2dController.initialize(
+      width: resolution,
+      height: resolution,
+    );
     if (success) {
       await _live2dController.loadModel(
         'hiyori_pro_zh/runtime/hiyori_pro_t11.model3.json',
@@ -143,7 +146,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
                 height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _lightPink.withValues(alpha:0.3),
+                  color: _lightPink.withValues(alpha: 0.3),
                 ),
               ),
             ),
@@ -155,7 +158,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
                 height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _primaryPink.withValues(alpha:0.15),
+                  color: _primaryPink.withValues(alpha: 0.15),
                 ),
               ),
             ),
@@ -227,6 +230,18 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
 
   /// 聊天界面 - 带键盘动画
   Widget _buildChatInterface(ChatState chatState, double keyboardHeight) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final safeTop = MediaQuery.of(context).padding.top;
+
+    const minLive2DSpace = 280.0;
+    const defaultChatHeight = 320.0;
+
+    final availableHeight =
+        screenHeight - safeTop - minLive2DSpace - keyboardHeight;
+    final chatHeight = keyboardHeight > 0
+        ? availableHeight.clamp(200.0, defaultChatHeight)
+        : defaultChatHeight;
+
     return Positioned(
       left: 0,
       right: 0,
@@ -235,14 +250,16 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
         padding: EdgeInsets.only(bottom: keyboardHeight),
-        child: Container(
-          height: 320,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          height: chatHeight,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
             boxShadow: [
               BoxShadow(
-                color: _primaryPink.withValues(alpha:0.1),
+                color: _primaryPink.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, -5),
               ),
@@ -255,7 +272,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: _lightPink.withValues(alpha:0.5),
+                  color: _lightPink.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -279,12 +296,18 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.favorite_border_rounded,
-                size: 48, color: _lightPink.withValues(alpha:0.5)),
+            Icon(
+              Icons.favorite_border_rounded,
+              size: 48,
+              color: _lightPink.withValues(alpha: 0.5),
+            ),
             const SizedBox(height: 12),
             Text(
               '和我聊聊天吧~',
-              style: TextStyle(color: _primaryPink.withValues(alpha:0.6), fontSize: 16),
+              style: TextStyle(
+                color: _primaryPink.withValues(alpha: 0.6),
+                fontSize: 16,
+              ),
             ),
           ],
         ),
@@ -317,12 +340,17 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
             height: 14,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: _primaryPink.withValues(alpha:0.6),
+              color: _primaryPink.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(width: 8),
-          Text('思考中...',
-              style: TextStyle(color: _primaryPink.withValues(alpha:0.6), fontSize: 13)),
+          Text(
+            '思考中...',
+            style: TextStyle(
+              color: _primaryPink.withValues(alpha: 0.6),
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
     );
@@ -333,11 +361,13 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha:0.1),
+        color: Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(error,
-          style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+      child: Text(
+        error,
+        style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+      ),
     );
   }
 
@@ -348,8 +378,10 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('清除对话', style: TextStyle(color: Color(0xFF333333))),
-        content: const Text('确定要清除所有对话记录吗？',
-            style: TextStyle(color: Color(0xFF666666))),
+        content: const Text(
+          '确定要清除所有对话记录吗？',
+          style: TextStyle(color: Color(0xFF666666)),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -368,7 +400,6 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
   }
 }
 
-
 // ============ 小组件 ============
 
 class _EmotionIndicator extends StatelessWidget {
@@ -384,7 +415,7 @@ class _EmotionIndicator extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFF85A2).withValues(alpha:0.15),
+            color: const Color(0xFFFF85A2).withValues(alpha: 0.15),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -398,7 +429,7 @@ class _EmotionIndicator extends StatelessWidget {
           Text(
             emotion.label,
             style: TextStyle(
-              color: const Color(0xFFFF85A2).withValues(alpha:0.9),
+              color: const Color(0xFFFF85A2).withValues(alpha: 0.9),
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
@@ -426,7 +457,7 @@ class _ActionButton extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFF85A2).withValues(alpha:0.15),
+              color: const Color(0xFFFF85A2).withValues(alpha: 0.15),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -456,8 +487,9 @@ class _MessageBubble extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints:
-            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
         decoration: BoxDecoration(
           gradient: isUser
               ? const LinearGradient(
@@ -473,7 +505,7 @@ class _MessageBubble extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFF85A2).withValues(alpha:0.1),
+              color: const Color(0xFFFF85A2).withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
