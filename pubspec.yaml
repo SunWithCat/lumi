@@ -1,0 +1,57 @@
+name: waifu
+description: "Project Waifu - AI Virtual Companion"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # 状态管理
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  flutter_hooks: ^0.20.5
+  hooks_riverpod: ^2.6.1
+  
+  # 数据库 (记忆系统)
+  drift: ^2.22.1
+  sqlite3_flutter_libs: ^0.5.28
+  path_provider: ^2.1.5
+  path: ^1.9.1
+  
+  # 网络 (LLM API)
+  dio: ^5.7.0
+  
+  # 序列化
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+  
+  # 工具
+  uuid: ^4.5.1
+  logger: ^2.5.0
+  equatable: ^2.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  
+  # 代码生成
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.6.3
+  freezed: ^2.5.7
+  json_serializable: ^6.9.0
+  drift_dev: ^2.22.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/live2d/
+    - assets/live2d/hiyori_free_zh/runtime/
+    - assets/live2d/hiyori_free_zh/runtime/hiyori_free_t08.2048/
+    - assets/live2d/hiyori_free_zh/runtime/motion/
+    - assets/images/
