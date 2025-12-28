@@ -17,6 +17,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final personaAsync = ref.watch(currentPersonaProvider);
+    final allPersonasAsync = ref.watch(allPersonasProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF5F7),
@@ -39,9 +40,9 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
             _buildCurrentPersonaCard(currentPersona),
             const SizedBox(height: 24),
 
-            // 预设人格
+            // 人格列表（从数据库读取）
             const Text(
-              '预设人格',
+              '可用人格',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -49,7 +50,13 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
               ),
             ),
             const SizedBox(height: 12),
-            ...PersonaConfig.presets.map((p) => _buildPresetCard(p, currentPersona)),
+            allPersonasAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator(color: _primaryPink)),
+              error: (e, _) => Text('加载失败: $e'),
+              data: (personas) => Column(
+                children: personas.map((p) => _buildPersonaCard(p, currentPersona)).toList(),
+              ),
+            ),
 
             const SizedBox(height: 24),
 
@@ -156,11 +163,11 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
     );
   }
 
-  Widget _buildPresetCard(PersonaConfig preset, PersonaConfig current) {
-    final isSelected = preset.id == current.id;
+  Widget _buildPersonaCard(PersonaConfig persona, PersonaConfig current) {
+    final isSelected = persona.id == current.id;
 
     return GestureDetector(
-      onTap: isSelected ? null : () => _selectPreset(preset),
+      onTap: isSelected ? null : () => _selectPersona(persona),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
@@ -184,16 +191,16 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: _lightPink,
+                color: isSelected ? _primaryPink : _lightPink,
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: Text(
-                  preset.name[0],
+                  persona.name[0],
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: _primaryPink,
+                    color: isSelected ? Colors.white : _primaryPink,
                   ),
                 ),
               ),
@@ -206,7 +213,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                   Row(
                     children: [
                       Text(
-                        preset.name,
+                        persona.name,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -215,7 +222,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        preset.age,
+                        persona.age,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[500],
@@ -225,7 +232,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    preset.bio,
+                    persona.bio,
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.grey[600],
@@ -244,6 +251,21 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
         ),
       ),
     );
+  }
+
+  void _selectPersona(PersonaConfig persona) {
+    final personaId = int.tryParse(persona.id);
+    if (personaId != null) {
+      ref.read(currentPersonaProvider.notifier).setPersonaById(personaId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('已切换为 ${persona.name}'),
+          backgroundColor: _primaryPink,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
   }
 
   Widget _buildTraitChip(String trait, bool isWhite) {
@@ -288,18 +310,6 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _selectPreset(PersonaConfig preset) {
-    ref.read(currentPersonaProvider.notifier).setPersona(preset);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('已切换为 ${preset.name}'),
-        backgroundColor: _primaryPink,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }

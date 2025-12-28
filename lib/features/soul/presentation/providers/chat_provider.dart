@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:lumi/core/config/api_config.dart';
+import 'package:lumi/core/config/app_settings.dart';
 import 'package:lumi/core/utils/logger.dart';
 import 'package:lumi/features/memory/data/memory_repository.dart';
 import 'package:lumi/features/memory/presentation/providers/memory_provider.dart';
@@ -45,15 +46,18 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final LLMClient? _llmClient;
   final MemoryRepository? _memoryRepo;
   final PersonaConfig _persona;
+  final LLMSettings _llmSettings;
   final _uuid = const Uuid();
 
   ChatNotifier({
     LLMClient? llmClient,
     MemoryRepository? memoryRepo,
     PersonaConfig persona = PersonaConfig.defaultPersona,
+    LLMSettings llmSettings = const LLMSettings(),
   })  : _llmClient = llmClient,
         _memoryRepo = memoryRepo,
         _persona = persona,
+        _llmSettings = llmSettings,
         super(const ChatState());
 
   /// 初始化：加载历史对话
@@ -130,6 +134,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
         final response = await _llmClient.chat(
           systemPrompt: enhancedPrompt,
           messages: history,
+          temperature: _llmSettings.temperature,
+          maxTokens: _llmSettings.maxTokens,
+          topP: _llmSettings.topP,
         );
 
         final parsed = ResponseParser.parse(response);
@@ -211,6 +218,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
 final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   final memoryRepo = ref.watch(memoryRepositoryProvider);
   final personaAsync = ref.watch(currentPersonaProvider);
+  final appSettings = ref.watch(appSettingsProvider);
   
   // 从 AsyncValue 中获取人格配置，如果还在加载则使用默认
   final persona = personaAsync.valueOrNull ?? PersonaConfig.sakura;
@@ -228,6 +236,7 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
     llmClient: llmClient,
     memoryRepo: memoryRepo,
     persona: persona,
+    llmSettings: appSettings.llmSettings,
   );
 
   // 加载历史对话

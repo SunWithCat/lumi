@@ -21,11 +21,15 @@ class LLMClient {
         ));
 
   /// 发送聊天请求
+  /// [temperature] 0.0-2.0, 越高越随机/创意
+  /// [maxTokens] 最大输出 token 数，越大回复越长
+  /// [topP] 0.0-1.0, nucleus sampling
   Future<String> chat({
     required String systemPrompt,
     required List<Map<String, String>> messages,
     double temperature = 0.7,
     int maxTokens = 500,
+    double topP = 1.0,
   }) async {
     try {
       // deepseek-reasoner 不支持 temperature 和 max_tokens
@@ -43,9 +47,10 @@ class LLMClient {
       if (!isReasonerModel) {
         requestData['temperature'] = temperature;
         requestData['max_tokens'] = maxTokens;
+        requestData['top_p'] = topP;
       }
       
-      AppLogger.d('LLM Request: model=$_model, messages=${messages.length}');
+      AppLogger.d('LLM Request: model=$_model, temp=$temperature, maxTokens=$maxTokens, topP=$topP');
       AppLogger.d('LLM URL: $_baseUrl/chat/completions');
       
       final response = await _dio.post(
