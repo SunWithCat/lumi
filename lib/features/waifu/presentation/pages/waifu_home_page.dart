@@ -43,6 +43,7 @@ class _WaifuHomePageState extends ConsumerState<WaifuHomePage> {
   }
 
   void _onHitAreaTapped(String hitArea) {
+    debugPrint('Hit area tapped: $hitArea');
     switch (hitArea) {
       case 'Body':
         _live2dController.playMotion('Tap@Body');

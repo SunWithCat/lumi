@@ -453,17 +453,29 @@ void Live2DModel::SetExpression(const std::string& expressionId) {
 std::string Live2DModel::HitTest(float x, float y) {
     if (!_modelSetting) return "";
     
+    // 将 0-1 坐标转换为模型坐标系
+    // Flutter 传入的是 0-1，需要转换为 -1 到 1
+    float modelX = x * 2.0f - 1.0f;
+    float modelY = -(y * 2.0f - 1.0f);  // Y 轴翻转
+    
+    LOGI("HitTest: input(%.2f, %.2f) -> model(%.2f, %.2f)", x, y, modelX, modelY);
+    
     csmInt32 count = _modelSetting->GetHitAreasCount();
+    LOGI("HitTest: %d hit areas defined", count);
     
     for (csmInt32 i = 0; i < count; i++) {
         const csmChar* area = _modelSetting->GetHitAreaName(i);
         const CubismIdHandle drawId = _modelSetting->GetHitAreaId(i);
         
-        if (IsHit(drawId, x, y)) {
+        LOGI("HitTest: checking area '%s'", area);
+        
+        if (IsHit(drawId, modelX, modelY)) {
+            LOGI("HitTest: HIT '%s'!", area);
             return area;
         }
     }
     
+    LOGI("HitTest: no hit");
     return "";
 }
 

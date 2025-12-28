@@ -61,8 +61,11 @@ class _Live2DViewState extends State<Live2DView> {
     final x = details.localPosition.dx / constraints.maxWidth;
     final y = details.localPosition.dy / constraints.maxHeight;
 
+    debugPrint('Tap at ($x, $y)');
     final hitArea = await widget.controller.hitTest(x, y);
-    if (hitArea != null && widget.onHitAreaTapped != null) {
+    debugPrint('HitTest result: $hitArea');
+    
+    if (hitArea != null && hitArea.isNotEmpty && widget.onHitAreaTapped != null) {
       widget.onHitAreaTapped!(hitArea);
     }
   }
