@@ -11,6 +11,10 @@ class ChatInput extends StatefulWidget {
 
 class _ChatInputState extends State<ChatInput> {
   final _controller = TextEditingController();
+  final _focusNode = FocusNode();
+
+  static const _primaryPink = Color(0xFFFF85A2);
+  static const _lightPink = Color(0xFFFFE4EC);
 
   void _handleSend() {
     final text = _controller.text;
@@ -23,30 +27,68 @@ class _ChatInputState extends State<ChatInput> {
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Row(
         children: [
           Expanded(
             child: TextField(
               controller: _controller,
-              decoration: const InputDecoration(
+              focusNode: _focusNode,
+              decoration: InputDecoration(
                 hintText: '说点什么...',
-                hintStyle: TextStyle(color: Colors.white38),
+                hintStyle: TextStyle(color: _primaryPink.withValues(alpha: 0.4)),
+                filled: true,
+                fillColor: _lightPink.withValues(alpha: 0.5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide(color: _primaryPink.withValues(alpha: 0.3)),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
               ),
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 15),
               onSubmitted: (_) => _handleSend(),
+              textInputAction: TextInputAction.send,
             ),
           ),
-          const SizedBox(width: 12),
-          IconButton.filled(
-            onPressed: _handleSend,
-            icon: const Icon(Icons.send),
+          const SizedBox(width: 10),
+          GestureDetector(
+            onTap: _handleSend,
+            child: Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF85A2), Color(0xFFFF6B8A)],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: _primaryPink.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 20),
+            ),
           ),
         ],
       ),

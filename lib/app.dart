@@ -9,7 +9,7 @@ class WaifuApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Project Waifu',
-      theme: AppTheme.dark,
+      theme: AppTheme.romantic,
       home: const WaifuHomePage(),
       debugShowCheckedModeBanner: false,
     );

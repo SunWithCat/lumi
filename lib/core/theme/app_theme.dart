@@ -3,35 +3,44 @@ import 'package:flutter/material.dart';
 class AppTheme {
   AppTheme._();
 
-  static const _primaryColor = Color(0xFFFF6B9D);
-  static const _backgroundColor = Color(0xFF1A1A2E);
-  static const _surfaceColor = Color(0xFF16213E);
+  // 浪漫粉白色调
+  static const _primaryPink = Color(0xFFFF85A2);
+  // static const _lightPink = Color(0xFFFFB6C8);
+  static const _softPink = Color(0xFFFFF0F3);
+  // static const _deepPink = Color(0xFFE91E63);
+  static const _lavender = Color(0xFFE8D5E7);
 
-  static ThemeData get dark => ThemeData(
+  static ThemeData get romantic => ThemeData(
     useMaterial3: true,
-    brightness: Brightness.dark,
-    colorScheme: const ColorScheme.dark(
-      primary: _primaryColor,
-      secondary: Color(0xFF9D4EDD),
-      surface: _surfaceColor,
-      error: Color(0xFFCF6679),
+    brightness: Brightness.light,
+    colorScheme: ColorScheme.light(
+      primary: _primaryPink,
+      secondary: _lavender,
+      surface: Colors.white,
+      surfaceContainerHighest: _softPink,
+      error: const Color(0xFFE57373),
+      onPrimary: Colors.white,
+      onSecondary: Colors.black87,
+      onSurface: Colors.black87,
     ),
-    scaffoldBackgroundColor: _backgroundColor,
+    scaffoldBackgroundColor: _softPink,
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
       centerTitle: true,
+      iconTheme: IconThemeData(color: _primaryPink),
     ),
     cardTheme: CardThemeData(
-      color: _surfaceColor,
-      elevation: 4,
+      color: Colors.white,
+      elevation: 2,
+      shadowColor: _primaryPink.withValues(alpha: 0.2),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: _surfaceColor,
+      fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(24),
         borderSide: BorderSide.none,
@@ -41,5 +50,18 @@ class AppTheme {
         vertical: 16,
       ),
     ),
+  );
+
+  // 保留暗色主题备用
+  static ThemeData get dark => ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    colorScheme: const ColorScheme.dark(
+      primary: _primaryPink,
+      secondary: _lavender,
+      surface: Color(0xFF2A2A3E),
+      error: Color(0xFFCF6679),
+    ),
+    scaffoldBackgroundColor: const Color(0xFF1A1A2E),
   );
 }

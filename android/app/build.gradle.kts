@@ -25,9 +25,9 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
-        // NDK 配置
+        // NDK 配置 - 只编译 arm64 (现代手机)
         ndk {
-            abiFilters += listOf("arm64-v8a", "x86_64")
+            abiFilters += listOf("arm64-v8a")
         }
 
         // CMake 配置
@@ -50,6 +50,11 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")
+            // 启用 ProGuard 规则
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

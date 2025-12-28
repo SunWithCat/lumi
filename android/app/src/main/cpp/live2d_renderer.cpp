@@ -309,8 +309,8 @@ void Live2DRenderer::RenderLoop() {
 }
 
 void Live2DRenderer::RenderFrame() {
-    // 深蓝色背景
-    glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
+    // 透明背景
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     
     if (!_model) {

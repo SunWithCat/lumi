@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:waifu/core/config/api_config.dart';
+import 'package:waifu/core/utils/logger.dart';
 import 'package:waifu/features/memory/data/memory_repository.dart';
 import 'package:waifu/features/memory/presentation/providers/memory_provider.dart';
 import 'package:waifu/features/soul/data/llm_client.dart';
@@ -90,14 +91,29 @@ class ChatNotifier extends StateNotifier<ChatState> {
       EmotionType emotion;
 
       if (_llmClient != null) {
-        // 构建上下文
-        final history = state.messages
-            .take(20)
-            .map((m) => {
-                  'role': m.isUser ? 'user' : 'assistant',
-                  'content': m.content,
-                })
-            .toList();
+        // 构建上下文 - 取最近的消息（排除刚添加的用户消息）
+        final recentMessages = state.messages.length > 1
+            ? state.messages.sublist(0, state.messages.length - 1)
+            : <ChatMessage>[];
+        
+        // 取最近 20 条作为上下文
+        final contextMessages = recentMessages.length > 2000
+            ? recentMessages.sublist(recentMessages.length - 2000)
+            : recentMessages;
+
+        final history = [
+          ...contextMessages.map((m) => {
+                'role': m.isUser ? 'user' : 'assistant',
+                'content': m.content,
+              }),
+          // 添加当前用户消息
+          {'role': 'user', 'content': content},
+        ];
+
+        AppLogger.d('Sending ${history.length} messages to LLM');
+        for (var i = 0; i < history.length; i++) {
+          AppLogger.d('  [$i] ${history[i]['role']}: ${history[i]['content']}');
+        }
 
         // 获取相关记忆 (RAG)
         String memorySummary = '';

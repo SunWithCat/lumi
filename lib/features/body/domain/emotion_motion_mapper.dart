@@ -1,7 +1,10 @@
+import 'dart:math';
 import 'package:waifu/features/soul/domain/entities/emotion.dart';
 
 /// 情绪到 Live2D 动作的映射
 class EmotionMotionMapper {
+  static final _random = Random();
+
   /// 根据情绪获取对应的动作组和索引
   static MotionMapping getMotionForEmotion(EmotionType emotion) {
     return switch (emotion) {
@@ -21,12 +24,14 @@ class EmotionMotionMapper {
       // 担心 - Tap@Body 动作
       EmotionType.worried => const MotionMapping('Tap@Body', 0, priority: 2),
       
-      // 悲伤/生气 - 使用不同的 Idle 动作
+      // 悲伤 - Idle[1]
       EmotionType.sad => const MotionMapping('Idle', 1, priority: 2),
+      
+      // 生气 - Flick 动作
       EmotionType.angry => const MotionMapping('Flick', 0, priority: 3),
       
-      // 中性 - 默认 Idle
-      EmotionType.neutral => const MotionMapping('Idle', 0, priority: 1),
+      // 中性 - 随机 Idle 动作 (0, 1, 2)
+      EmotionType.neutral => MotionMapping('Idle', _random.nextInt(3), priority: 1),
     };
   }
 }
