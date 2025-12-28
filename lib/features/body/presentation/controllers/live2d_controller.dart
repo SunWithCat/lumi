@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:waifu/core/utils/logger.dart';
+import 'package:lumi/core/utils/logger.dart';
 
 /// Live2D 控制器
 class Live2DController extends ChangeNotifier {
-  static const _channel = MethodChannel('com.sunwithcat.waifu/live2d');
-  static const _eventChannel = EventChannel('com.sunwithcat.waifu/live2d/events');
+  static const _channel = MethodChannel('com.sunwithcat.lumi/live2d');
+  static const _eventChannel = EventChannel('com.sunwithcat.lumi/live2d/events');
 
   int? _textureId;
   bool _isInitialized = false;

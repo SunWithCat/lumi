@@ -1,4 +1,4 @@
-package com.sunwithcat.waifu.live2d
+package com.sunwithcat.lumi.live2d
 
 import android.content.Context
 import android.graphics.SurfaceTexture
@@ -18,8 +18,8 @@ class Live2DPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, EventChanne
 
     companion object {
         private const val TAG = "Live2DPlugin"
-        private const val CHANNEL = "com.sunwithcat.waifu/live2d"
-        private const val EVENT_CHANNEL = "com.sunwithcat.waifu/live2d/events"
+        private const val CHANNEL = "com.sunwithcat.lumi/live2d"
+        private const val EVENT_CHANNEL = "com.sunwithcat.lumi/live2d/events"
     }
 
     private lateinit var context: Context

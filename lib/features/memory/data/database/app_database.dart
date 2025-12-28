@@ -258,7 +258,7 @@ class AppDatabase extends _$AppDatabase {
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'waifu.db'));
+    final file = File(p.join(dbFolder.path, 'lumi.db'));
     return NativeDatabase.createInBackground(file);
   });
 }

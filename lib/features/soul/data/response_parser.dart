@@ -1,5 +1,5 @@
-﻿import 'package:waifu/core/utils/logger.dart';
-import 'package:waifu/features/soul/domain/entities/emotion.dart';
+﻿import 'package:lumi/core/utils/logger.dart';
+import 'package:lumi/features/soul/domain/entities/emotion.dart';
 
 class ParsedResponse {
   final String text;

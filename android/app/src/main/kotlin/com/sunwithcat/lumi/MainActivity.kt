@@ -1,8 +1,8 @@
-package com.sunwithcat.waifu
+package com.sunwithcat.lumi
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
-import com.sunwithcat.waifu.live2d.Live2DPlugin
+import com.sunwithcat.lumi.live2d.Live2DPlugin
 
 class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

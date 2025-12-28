@@ -1,5 +1,5 @@
 # Live2D JNI 相关类不混淆
--keep class com.sunwithcat.waifu.live2d.** { *; }
+-keep class com.sunwithcat.lumi.live2d.** { *; }
 
 # 保留 JNI 方法
 -keepclasseswithmembernames class * {

@@ -1,5 +1,5 @@
-import 'package:waifu/features/memory/data/database/app_database.dart';
-import 'package:waifu/features/soul/domain/entities/persona_config.dart';
+import 'package:lumi/features/memory/data/database/app_database.dart';
+import 'package:lumi/features/soul/domain/entities/persona_config.dart';
 
 /// 人格配置存储 - 基于 Drift 数据库
 class PersonaRepository {

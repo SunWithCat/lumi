@@ -1,4 +1,4 @@
-# waifu
+# lumi
 
 A new Flutter project.
 

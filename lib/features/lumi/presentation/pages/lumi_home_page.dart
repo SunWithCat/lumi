@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:waifu/core/config/app_settings.dart';
-import 'package:waifu/features/body/domain/emotion_motion_mapper.dart';
-import 'package:waifu/features/body/presentation/controllers/live2d_controller.dart';
-import 'package:waifu/features/body/presentation/providers/live2d_provider.dart';
-import 'package:waifu/features/body/presentation/widgets/live2d_view.dart';
-import 'package:waifu/features/chat/presentation/widgets/chat_input.dart';
-import 'package:waifu/features/settings/presentation/pages/settings_page.dart';
-import 'package:waifu/features/soul/domain/entities/emotion.dart';
-import 'package:waifu/features/soul/presentation/providers/chat_provider.dart';
+import 'package:lumi/core/config/app_settings.dart';
+import 'package:lumi/features/body/domain/emotion_motion_mapper.dart';
+import 'package:lumi/features/body/presentation/controllers/live2d_controller.dart';
+import 'package:lumi/features/body/presentation/providers/live2d_provider.dart';
+import 'package:lumi/features/body/presentation/widgets/live2d_view.dart';
+import 'package:lumi/features/chat/presentation/widgets/chat_input.dart';
+import 'package:lumi/features/settings/presentation/pages/settings_page.dart';
+import 'package:lumi/features/soul/domain/entities/emotion.dart';
+import 'package:lumi/features/soul/presentation/providers/chat_provider.dart';
 
-class WaifuHomePage extends ConsumerStatefulWidget {
-  const WaifuHomePage({super.key});
+class LumiHomePage extends ConsumerStatefulWidget {
+  const LumiHomePage({super.key});
 
   @override
-  ConsumerState<WaifuHomePage> createState() => _WaifuHomePageState();
+  ConsumerState<LumiHomePage> createState() => _LumiHomePageState();
 }
 
-class _WaifuHomePageState extends ConsumerState<WaifuHomePage> {
+class _LumiHomePageState extends ConsumerState<LumiHomePage> {
   late Live2DController _live2dController;
   bool _live2dInitialized = false;
   final ScrollController _scrollController = ScrollController();
@@ -35,8 +35,8 @@ class _WaifuHomePageState extends ConsumerState<WaifuHomePage> {
   }
 
   Future<void> _initLive2D() async {
-    // 从设置读取分辨率
-    final settings = ref.read(appSettingsProvider);
+    // 等待设置加载完成
+    final settings = await ref.read(appSettingsProvider.notifier).waitForLoad();
     final resolution = settings.renderQuality.resolution;
     
     final success = await _live2dController.initialize(width: resolution, height: resolution);
@@ -174,9 +174,13 @@ class _WaifuHomePageState extends ConsumerState<WaifuHomePage> {
           child: Center(
             child: AspectRatio(
               aspectRatio: 1, // 保持 1:1 比例
-              child: Live2DView(
-                controller: _live2dController,
-                onHitAreaTapped: _onHitAreaTapped,
+              child: AnimatedOpacity(
+                opacity: _live2dInitialized ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Live2DView(
+                  controller: _live2dController,
+                  onHitAreaTapped: _onHitAreaTapped,
+                ),
               ),
             ),
           ),

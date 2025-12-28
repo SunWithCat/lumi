@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:waifu/features/memory/data/database/app_database.dart';
-import 'package:waifu/features/soul/presentation/providers/persona_provider.dart';
+import 'package:lumi/features/memory/data/database/app_database.dart';
+import 'package:lumi/features/memory/presentation/providers/memory_provider.dart';
 
 /// 画质等级
 enum RenderQuality {
@@ -34,9 +34,10 @@ class AppSettingsState {
 class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
   static const _keyRenderQuality = 'render_quality';
   final AppDatabase _db;
+  late final Future<void> _loadFuture;
 
   AppSettingsNotifier(this._db) : super(const AppSettingsState()) {
-    _load();
+    _loadFuture = _load();
   }
 
   Future<void> _load() async {
@@ -49,6 +50,12 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     }
   }
 
+  /// 等待设置加载完成并返回当前状态
+  Future<AppSettingsState> waitForLoad() async {
+    await _loadFuture;
+    return state;
+  }
+
   Future<void> setRenderQuality(RenderQuality quality) async {
     state = state.copyWith(renderQuality: quality);
     await _db.setSetting(_keyRenderQuality, quality.index.toString());
@@ -57,6 +64,6 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
 
 /// Provider
 final appSettingsProvider = StateNotifierProvider<AppSettingsNotifier, AppSettingsState>((ref) {
-  final db = ref.watch(appDatabaseProvider);
+  final db = ref.watch(databaseProvider);
   return AppSettingsNotifier(db);
 });

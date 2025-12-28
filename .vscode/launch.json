@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "waifu (debug)",
+      "name": "lumi (debug)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
@@ -11,7 +11,7 @@
       ]
     },
     {
-      "name": "waifu (release)",
+      "name": "lumi (release)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",

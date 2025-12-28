@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.sunwithcat.waifu"
+    namespace = "com.sunwithcat.lumi"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.sunwithcat.waifu"
+        applicationId = "com.sunwithcat.lumi"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

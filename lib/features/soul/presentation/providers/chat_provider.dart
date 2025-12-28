@@ -1,15 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import 'package:waifu/core/config/api_config.dart';
-import 'package:waifu/core/utils/logger.dart';
-import 'package:waifu/features/memory/data/memory_repository.dart';
-import 'package:waifu/features/memory/presentation/providers/memory_provider.dart';
-import 'package:waifu/features/soul/data/llm_client.dart';
-import 'package:waifu/features/soul/data/response_parser.dart';
-import 'package:waifu/features/soul/domain/entities/chat_message.dart';
-import 'package:waifu/features/soul/domain/entities/emotion.dart';
-import 'package:waifu/features/soul/domain/entities/persona_config.dart';
-import 'package:waifu/features/soul/presentation/providers/persona_provider.dart';
+import 'package:lumi/core/config/api_config.dart';
+import 'package:lumi/core/utils/logger.dart';
+import 'package:lumi/features/memory/data/memory_repository.dart';
+import 'package:lumi/features/memory/presentation/providers/memory_provider.dart';
+import 'package:lumi/features/soul/data/llm_client.dart';
+import 'package:lumi/features/soul/data/response_parser.dart';
+import 'package:lumi/features/soul/domain/entities/chat_message.dart';
+import 'package:lumi/features/soul/domain/entities/emotion.dart';
+import 'package:lumi/features/soul/domain/entities/persona_config.dart';
+import 'package:lumi/features/soul/presentation/providers/persona_provider.dart';
 
 /// 聊天状态
 class ChatState {

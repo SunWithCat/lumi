@@ -1,6 +1,6 @@
-import 'package:waifu/features/memory/data/database/app_database.dart';
-import 'package:waifu/features/soul/domain/entities/chat_message.dart';
-import 'package:waifu/features/soul/domain/entities/emotion.dart';
+import 'package:lumi/features/memory/data/database/app_database.dart';
+import 'package:lumi/features/soul/domain/entities/chat_message.dart';
+import 'package:lumi/features/soul/domain/entities/emotion.dart';
 
 /// 记忆仓库
 class MemoryRepository {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:waifu/core/config/app_settings.dart';
-import 'package:waifu/features/soul/presentation/pages/persona_settings_page.dart';
+import 'package:lumi/core/config/app_settings.dart';
+import 'package:lumi/features/soul/presentation/pages/persona_settings_page.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});

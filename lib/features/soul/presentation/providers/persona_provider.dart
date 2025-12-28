@@ -1,18 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:waifu/features/memory/data/database/app_database.dart';
-import 'package:waifu/features/soul/data/persona_repository.dart';
-import 'package:waifu/features/soul/domain/entities/persona_config.dart';
+import 'package:lumi/features/memory/presentation/providers/memory_provider.dart';
+import 'package:lumi/features/soul/data/persona_repository.dart';
+import 'package:lumi/features/soul/domain/entities/persona_config.dart';
 
-/// AppDatabase Provider
-final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  final db = AppDatabase();
-  ref.onDispose(() => db.close());
-  return db;
-});
-
-/// PersonaRepository Provider
+/// PersonaRepository Provider - 复用 databaseProvider 避免数据库锁定
 final personaRepositoryProvider = Provider<PersonaRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
+  final db = ref.watch(databaseProvider);
   return PersonaRepository(db);
 });
 

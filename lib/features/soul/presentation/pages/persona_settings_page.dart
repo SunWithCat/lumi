@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:waifu/features/soul/domain/entities/persona_config.dart';
-import 'package:waifu/features/soul/presentation/providers/persona_provider.dart';
+import 'package:lumi/features/soul/domain/entities/persona_config.dart';
+import 'package:lumi/features/soul/presentation/providers/persona_provider.dart';
 
 class PersonaSettingsPage extends ConsumerStatefulWidget {
   const PersonaSettingsPage({super.key});

@@ -34,7 +34,7 @@ void Live2DModel::SetJavaVM(JavaVM* vm) {
 void Live2DModel::InitJNICallback(JNIEnv* env) {
     if (g_live2dNativeClass) return;
     
-    jclass localClass = env->FindClass("com/sunwithcat/waifu/live2d/Live2DNative");
+    jclass localClass = env->FindClass("com/sunwithcat/lumi/live2d/Live2DNative");
     if (localClass) {
         g_live2dNativeClass = (jclass)env->NewGlobalRef(localClass);
         g_loadTextureMethod = env->GetStaticMethodID(g_live2dNativeClass, "loadTexture", "(Ljava/lang/String;)[I");

@@ -1,4 +1,4 @@
-package com.sunwithcat.waifu.live2d
+package com.sunwithcat.lumi.live2d
 
 import android.content.res.AssetManager
 import android.graphics.Bitmap

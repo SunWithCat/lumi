@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:waifu/core/utils/logger.dart';
+import 'package:lumi/core/utils/logger.dart';
 
 /// LLM 客户端 (兼容 OpenAI/DeepSeek API)
 class LLMClient {
@@ -45,6 +45,9 @@ class LLMClient {
         requestData['max_tokens'] = maxTokens;
       }
       
+      AppLogger.d('LLM Request: model=$_model, messages=${messages.length}');
+      AppLogger.d('LLM URL: $_baseUrl/chat/completions');
+      
       final response = await _dio.post(
         '$_baseUrl/chat/completions',
         options: Options(
@@ -55,6 +58,8 @@ class LLMClient {
         ),
         data: requestData,
       );
+      
+      AppLogger.d('LLM Response status: ${response.statusCode}');
 
       final choice = response.data['choices'][0];
       final message = choice['message'];
@@ -76,10 +81,13 @@ class LLMClient {
       AppLogger.d('LLM Response: $content');
       return content;
     } on DioException catch (e) {
-      AppLogger.e('LLM Error', e, e.stackTrace);
+      AppLogger.e('LLM DioError: ${e.type} - ${e.message}');
+      if (e.response != null) {
+        AppLogger.e('LLM Response: ${e.response?.statusCode} - ${e.response?.data}');
+      }
       throw LLMException('请求失败: ${e.message}');
-    } catch (e) {
-      AppLogger.e('LLM Error', e);
+    } catch (e, st) {
+      AppLogger.e('LLM Error', e, st);
       throw LLMException('未知错误: $e');
     }
   }

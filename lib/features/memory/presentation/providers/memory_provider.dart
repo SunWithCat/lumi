@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:waifu/features/memory/data/database/app_database.dart';
-import 'package:waifu/features/memory/data/memory_repository.dart';
+import 'package:lumi/features/memory/data/database/app_database.dart';
+import 'package:lumi/features/memory/data/memory_repository.dart';
 
 /// 数据库 Provider
 final databaseProvider = Provider<AppDatabase>((ref) {

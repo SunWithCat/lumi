@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'package:waifu/features/soul/domain/entities/emotion.dart';
+import 'package:lumi/features/soul/domain/entities/emotion.dart';
 
 /// 情绪到 Live2D 动作的映射
 class EmotionMotionMapper {

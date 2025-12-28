@@ -25,7 +25,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 extern "C" {
 
 JNIEXPORT jboolean JNICALL
-Java_com_sunwithcat_waifu_live2d_Live2DNative_nativeInit(
+Java_com_sunwithcat_lumi_live2d_Live2DNative_nativeInit(
     JNIEnv* env,
     jobject thiz,
     jobject assetManager,
@@ -44,7 +44,7 @@ Java_com_sunwithcat_waifu_live2d_Live2DNative_nativeInit(
 }
 
 JNIEXPORT void JNICALL
-Java_com_sunwithcat_waifu_live2d_Live2DNative_nativeDestroy(
+Java_com_sunwithcat_lumi_live2d_Live2DNative_nativeDestroy(
     JNIEnv* env,
     jobject thiz
 ) {
@@ -57,7 +57,7 @@ Java_com_sunwithcat_waifu_live2d_Live2DNative_nativeDestroy(
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sunwithcat_waifu_live2d_Live2DNative_nativeLoadModel(
+Java_com_sunwithcat_lumi_live2d_Live2DNative_nativeLoadModel(
     JNIEnv* env,
     jobject thiz,
     jstring modelPath
@@ -72,7 +72,7 @@ Java_com_sunwithcat_waifu_live2d_Live2DNative_nativeLoadModel(
 }
 
 JNIEXPORT void JNICALL
-Java_com_sunwithcat_waifu_live2d_Live2DNative_nativePlayMotion(
+Java_com_sunwithcat_lumi_live2d_Live2DNative_nativePlayMotion(
     JNIEnv* env,
     jobject thiz,
     jstring group,
@@ -87,7 +87,7 @@ Java_com_sunwithcat_waifu_live2d_Live2DNative_nativePlayMotion(
 }
 
 JNIEXPORT void JNICALL
-Java_com_sunwithcat_waifu_live2d_Live2DNative_nativeSetExpression(
+Java_com_sunwithcat_lumi_live2d_Live2DNative_nativeSetExpression(
     JNIEnv* env,
     jobject thiz,
     jstring expressionId
@@ -100,7 +100,7 @@ Java_com_sunwithcat_waifu_live2d_Live2DNative_nativeSetExpression(
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_sunwithcat_waifu_live2d_Live2DNative_nativeHitTest(
+Java_com_sunwithcat_lumi_live2d_Live2DNative_nativeHitTest(
     JNIEnv* env,
     jobject thiz,
     jfloat x,
@@ -113,7 +113,7 @@ Java_com_sunwithcat_waifu_live2d_Live2DNative_nativeHitTest(
 }
 
 JNIEXPORT void JNICALL
-Java_com_sunwithcat_waifu_live2d_Live2DNative_nativeSetLookAt(
+Java_com_sunwithcat_lumi_live2d_Live2DNative_nativeSetLookAt(
     JNIEnv* env,
     jobject thiz,
     jfloat x,
@@ -124,7 +124,7 @@ Java_com_sunwithcat_waifu_live2d_Live2DNative_nativeSetLookAt(
 }
 
 JNIEXPORT void JNICALL
-Java_com_sunwithcat_waifu_live2d_Live2DNative_nativePause(
+Java_com_sunwithcat_lumi_live2d_Live2DNative_nativePause(
     JNIEnv* env,
     jobject thiz
 ) {
@@ -134,7 +134,7 @@ Java_com_sunwithcat_waifu_live2d_Live2DNative_nativePause(
 }
 
 JNIEXPORT void JNICALL
-Java_com_sunwithcat_waifu_live2d_Live2DNative_nativeResume(
+Java_com_sunwithcat_lumi_live2d_Live2DNative_nativeResume(
     JNIEnv* env,
     jobject thiz
 ) {

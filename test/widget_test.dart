@@ -7,13 +7,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:waifu/app.dart';
+import 'package:lumi/app.dart';
 
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const WaifuApp());
+    await tester.pumpWidget(const LumiApp());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

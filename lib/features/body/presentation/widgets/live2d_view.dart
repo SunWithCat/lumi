@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:waifu/features/body/presentation/controllers/live2d_controller.dart';
+import 'package:lumi/features/body/presentation/controllers/live2d_controller.dart';
 
 /// Live2D 视图组件
 class Live2DView extends StatefulWidget {
