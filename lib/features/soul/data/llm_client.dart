@@ -17,7 +17,7 @@ class LLMClient {
         _model = model,
         _dio = Dio(BaseOptions(
           connectTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 120), // 推理模型需要更长时间
         ));
 
   /// 发送聊天请求
@@ -28,6 +28,23 @@ class LLMClient {
     int maxTokens = 500,
   }) async {
     try {
+      // deepseek-reasoner 不支持 temperature 和 max_tokens
+      final isReasonerModel = _model.contains('reasoner');
+      
+      final requestData = <String, dynamic>{
+        'model': _model,
+        'messages': [
+          {'role': 'system', 'content': systemPrompt},
+          ...messages,
+        ],
+      };
+      
+      // 只有非推理模型才添加这些参数
+      if (!isReasonerModel) {
+        requestData['temperature'] = temperature;
+        requestData['max_tokens'] = maxTokens;
+      }
+      
       final response = await _dio.post(
         '$_baseUrl/chat/completions',
         options: Options(
@@ -36,18 +53,26 @@ class LLMClient {
             'Content-Type': 'application/json',
           },
         ),
-        data: {
-          'model': _model,
-          'messages': [
-            {'role': 'system', 'content': systemPrompt},
-            ...messages,
-          ],
-          'temperature': temperature,
-          'max_tokens': maxTokens,
-        },
+        data: requestData,
       );
 
-      final content = response.data['choices'][0]['message']['content'] as String;
+      final choice = response.data['choices'][0];
+      final message = choice['message'];
+      
+      // deepseek-reasoner 模型会返回 reasoning_content 和 content
+      // 普通模型只返回 content
+      String content;
+      if (message['reasoning_content'] != null) {
+        // R1 推理模型：content 是最终答案
+        content = message['content'] as String? ?? '';
+        final reasoning = message['reasoning_content'] as String?;
+        if (reasoning != null && reasoning.isNotEmpty) {
+          AppLogger.d('LLM Reasoning: ${reasoning.substring(0, reasoning.length > 200 ? 200 : reasoning.length)}...');
+        }
+      } else {
+        content = message['content'] as String;
+      }
+      
       AppLogger.d('LLM Response: $content');
       return content;
     } on DioException catch (e) {

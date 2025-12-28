@@ -9,6 +9,7 @@ import 'package:waifu/features/soul/data/response_parser.dart';
 import 'package:waifu/features/soul/domain/entities/chat_message.dart';
 import 'package:waifu/features/soul/domain/entities/emotion.dart';
 import 'package:waifu/features/soul/domain/entities/persona_config.dart';
+import 'package:waifu/features/soul/presentation/providers/persona_provider.dart';
 
 /// 聊天状态
 class ChatState {
@@ -209,6 +210,10 @@ class ChatNotifier extends StateNotifier<ChatState> {
 /// Provider 定义
 final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   final memoryRepo = ref.watch(memoryRepositoryProvider);
+  final personaAsync = ref.watch(currentPersonaProvider);
+  
+  // 从 AsyncValue 中获取人格配置，如果还在加载则使用默认
+  final persona = personaAsync.valueOrNull ?? PersonaConfig.sakura;
   
   LLMClient? llmClient;
   if (ApiConfig.isConfigured) {
@@ -222,6 +227,7 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   final notifier = ChatNotifier(
     llmClient: llmClient,
     memoryRepo: memoryRepo,
+    persona: persona,
   );
 
   // 加载历史对话

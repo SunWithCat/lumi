@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:waifu/core/config/app_settings.dart';
 import 'package:waifu/features/body/domain/emotion_motion_mapper.dart';
 import 'package:waifu/features/body/presentation/controllers/live2d_controller.dart';
 import 'package:waifu/features/body/presentation/providers/live2d_provider.dart';
 import 'package:waifu/features/body/presentation/widgets/live2d_view.dart';
 import 'package:waifu/features/chat/presentation/widgets/chat_input.dart';
+import 'package:waifu/features/settings/presentation/pages/settings_page.dart';
 import 'package:waifu/features/soul/domain/entities/emotion.dart';
 import 'package:waifu/features/soul/presentation/providers/chat_provider.dart';
 
@@ -33,7 +35,11 @@ class _WaifuHomePageState extends ConsumerState<WaifuHomePage> {
   }
 
   Future<void> _initLive2D() async {
-    final success = await _live2dController.initialize(width: 512, height: 512);
+    // 从设置读取分辨率
+    final settings = ref.read(appSettingsProvider);
+    final resolution = settings.renderQuality.resolution;
+    
+    final success = await _live2dController.initialize(width: resolution, height: resolution);
     if (success) {
       await _live2dController.loadModel(
         'hiyori_pro_zh/runtime/hiyori_pro_t11.model3.json',
@@ -192,9 +198,21 @@ class _WaifuHomePageState extends ConsumerState<WaifuHomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _EmotionIndicator(emotion: chatState.currentEmotion),
-              _ActionButton(
-                icon: Icons.refresh_rounded,
-                onTap: () => _showClearDialog(context),
+              Row(
+                children: [
+                  _ActionButton(
+                    icon: Icons.settings_rounded,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsPage()),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _ActionButton(
+                    icon: Icons.refresh_rounded,
+                    onTap: () => _showClearDialog(context),
+                  ),
+                ],
               ),
             ],
           ),
