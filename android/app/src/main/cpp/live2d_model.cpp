@@ -122,6 +122,20 @@ void Live2DModel::SetupModel(AAssetManager* assetManager, const std::string& dir
         if (buffer) {
             LoadPhysics(buffer, size);
             free(buffer);
+            LOGI("Physics loaded");
+        }
+    }
+    
+    // 加载 Pose（手臂切换等）
+    if (strcmp(_modelSetting->GetPoseFileName(), "") != 0) {
+        std::string path = dir + _modelSetting->GetPoseFileName();
+        csmSizeInt size;
+        csmByte* buffer = LoadFile(assetManager, path, &size);
+        
+        if (buffer) {
+            LoadPose(buffer, size);
+            free(buffer);
+            LOGI("Pose loaded");
         }
     }
     
@@ -172,6 +186,12 @@ void Live2DModel::SetupModel(AAssetManager* assetManager, const std::string& dir
     
     // 预加载动作
     PreloadMotions(assetManager, dir);
+    
+    // 初始化 Pose 状态（重要：解决多余手臂问题）
+    if (_pose) {
+        _pose->Reset(_model);
+        LOGI("Pose reset");
+    }
 }
 
 void Live2DModel::SetupTextures(AAssetManager* assetManager, const std::string& dir) {

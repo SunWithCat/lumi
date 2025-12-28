@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:waifu/features/body/domain/emotion_motion_mapper.dart';
 import 'package:waifu/features/body/presentation/controllers/live2d_controller.dart';
 import 'package:waifu/features/body/presentation/providers/live2d_provider.dart';
 import 'package:waifu/features/body/presentation/widgets/live2d_view.dart';
@@ -26,24 +27,23 @@ class _WaifuHomePageState extends ConsumerState<WaifuHomePage> {
   }
 
   Future<void> _initLive2D() async {
-    // 初始化 Live2D 渲染器
     final success = await _live2dController.initialize(width: 512, height: 512);
+    debugPrint('Live2D initialize: $success');
     if (success) {
-      // 加载 hiyori 模型
-      await _live2dController.loadModel('live2d/runtime/hiyori_free_t08.model3.json');
+      // 加载 Pro 模型
+      final modelLoaded = await _live2dController.loadModel('hiyori_pro_zh/runtime/hiyori_pro_t11.model3.json');
+      debugPrint('Live2D model loaded: $modelLoaded, controller.isModelLoaded: ${_live2dController.isModelLoaded}');
       setState(() => _live2dInitialized = true);
     }
   }
 
   void _onHitAreaTapped(String hitArea) {
-    // 根据点击区域播放动作
     switch (hitArea) {
-      case 'head':
-        _live2dController.playMotion('tap_head');
+      case 'Body':
+        _live2dController.playMotion('Tap@Body');
         break;
-      case 'body':
-        _live2dController.playMotion('tap_body');
-        break;
+      default:
+        _live2dController.playMotion('Tap');
     }
   }
 
@@ -51,14 +51,28 @@ class _WaifuHomePageState extends ConsumerState<WaifuHomePage> {
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
 
-    // 监听情感变化，更新 Live2D 表情
+    // 监听情感变化，更新 Live2D 动作
     ref.listen<ChatState>(chatProvider, (prev, next) {
+      debugPrint('Emotion: ${prev?.currentEmotion} -> ${next.currentEmotion}, init=$_live2dInitialized');
       if (prev?.currentEmotion != next.currentEmotion && _live2dInitialized) {
-        _updateLive2DExpression(next.currentEmotion);
+        debugPrint('Playing emotion motion: ${next.currentEmotion}');
+        _playEmotionMotion(next.currentEmotion);
       }
     });
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.white70),
+            onPressed: () => _showClearDialog(context),
+            tooltip: '清除对话',
+          ),
+        ],
+      ),
+      extendBodyBehindAppBar: true,
       body: SafeArea(
         child: Column(
           children: [
@@ -67,7 +81,6 @@ class _WaifuHomePageState extends ConsumerState<WaifuHomePage> {
               flex: 3,
               child: Stack(
                 children: [
-                  // 背景渐变
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
@@ -77,18 +90,16 @@ class _WaifuHomePageState extends ConsumerState<WaifuHomePage> {
                       ),
                     ),
                   ),
-                  // Live2D 视图
                   Center(
                     child: SizedBox(
-                      width: 300,
-                      height: 400,
+                      width: 350,
+                      height: 350,
                       child: Live2DView(
                         controller: _live2dController,
                         onHitAreaTapped: _onHitAreaTapped,
                       ),
                     ),
                   ),
-                  // 情感指示器
                   Positioned(
                     top: 16,
                     right: 16,
@@ -153,22 +164,33 @@ class _WaifuHomePageState extends ConsumerState<WaifuHomePage> {
     );
   }
 
-  void _updateLive2DExpression(EmotionType emotion) {
-    // 情感到 Live2D 表情的映射
-    final expressionMap = {
-      EmotionType.happy: 'smile',
-      EmotionType.sad: 'sad',
-      EmotionType.angry: 'angry',
-      EmotionType.surprised: 'surprised',
-      EmotionType.shy: 'shy',
-      EmotionType.curious: 'think',
-      EmotionType.loving: 'love',
-      EmotionType.worried: 'worried',
-      EmotionType.neutral: 'neutral',
-    };
+  void _playEmotionMotion(EmotionType emotion) {
+    final mapping = EmotionMotionMapper.getMotionForEmotion(emotion);
+    debugPrint('_playEmotionMotion: emotion=$emotion, mapping=${mapping.group}[${mapping.index}], isModelLoaded=${_live2dController.isModelLoaded}');
+    _live2dController.playMotion(mapping.group, index: mapping.index, priority: mapping.priority);
+  }
 
-    final expression = expressionMap[emotion] ?? 'neutral';
-    _live2dController.setExpression(expression);
+  void _showClearDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('清除对话'),
+        content: const Text('确定要清除所有对话记录吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              ref.read(chatProvider.notifier).clearMessages();
+              Navigator.pop(ctx);
+            },
+            child: const Text('确定', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 }
 

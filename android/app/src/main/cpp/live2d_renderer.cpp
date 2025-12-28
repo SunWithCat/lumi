@@ -322,20 +322,13 @@ void Live2DRenderer::RenderFrame() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // 预乘 alpha 的混合模式
     
-    // 创建投影矩阵（按照官方示例的方式）
+    // 创建投影矩阵
     CubismMatrix44 projection;
     projection.LoadIdentity();
     
-    // 按照官方示例的缩放逻辑
-    if (_width < _height) {
-        // 竖屏：横向缩放
-        float scale = static_cast<float>(_height) / static_cast<float>(_width);
-        projection.Scale(1.0f, scale);
-    } else {
-        // 横屏：纵向缩放
-        float scale = static_cast<float>(_width) / static_cast<float>(_height);
-        projection.Scale(scale, 1.0f);
-    }
+    // 保持模型比例，不拉伸
+    // 纹理是正方形 (512x512)，所以不需要额外缩放
+    // 模型坐标系是 -1 到 1
     
     // 绘制模型（Draw 内部会乘以模型矩阵）
     _model->Draw(projection);
@@ -345,16 +338,25 @@ bool Live2DRenderer::LoadModel(const std::string& modelPath) {
     LOGI("LoadModel request: %s", modelPath.c_str());
     
     // 保存模型路径，在渲染线程中加载
-    std::lock_guard<std::mutex> lock(_modelMutex);
-    _pendingModelPath = modelPath;
-    _modelLoadRequested = true;
-    
-    // 等待加载完成（最多等待 5 秒）
-    for (int i = 0; i < 50 && _modelLoadRequested; i++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    {
+        std::lock_guard<std::mutex> lock(_modelMutex);
+        _pendingModelPath = modelPath;
+        _modelLoadRequested = true;
     }
     
-    return _model != nullptr;
+    // 等待加载完成（最多等待 5 秒）- 不持有锁
+    for (int i = 0; i < 50; i++) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::lock_guard<std::mutex> lock(_modelMutex);
+        if (!_modelLoadRequested) {
+            break;
+        }
+    }
+    
+    std::lock_guard<std::mutex> lock(_modelMutex);
+    bool result = _model != nullptr;
+    LOGI("LoadModel result: %s (model=%p)", result ? "true" : "false", _model.get());
+    return result;
 }
 
 void Live2DRenderer::UnloadModel() {
@@ -363,9 +365,12 @@ void Live2DRenderer::UnloadModel() {
 }
 
 void Live2DRenderer::PlayMotion(const std::string& group, int index, int priority) {
+    LOGI("PlayMotion: %s[%d] priority=%d", group.c_str(), index, priority);
     std::lock_guard<std::mutex> lock(_modelMutex);
     if (_model) {
         _model->StartMotion(group, index, priority);
+    } else {
+        LOGI("PlayMotion: model is null");
     }
 }
 

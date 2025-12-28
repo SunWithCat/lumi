@@ -64,7 +64,11 @@ class Live2DController extends ChangeNotifier {
 
   /// 播放动作
   Future<void> playMotion(String group, {int index = 0, int priority = 2}) async {
-    if (!_isModelLoaded) return;
+    AppLogger.i('playMotion called: $group[$index] priority=$priority, isModelLoaded=$_isModelLoaded');
+    if (!_isModelLoaded) {
+      AppLogger.w('playMotion: model not loaded, skipping');
+      return;
+    }
 
     try {
       await _channel.invokeMethod('playMotion', {
@@ -72,6 +76,7 @@ class Live2DController extends ChangeNotifier {
         'index': index,
         'priority': priority,
       });
+      AppLogger.i('playMotion: method invoked successfully');
     } on PlatformException catch (e) {
       AppLogger.e('Play motion failed', e);
     }
