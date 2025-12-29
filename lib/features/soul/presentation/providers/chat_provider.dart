@@ -4,6 +4,8 @@ import 'package:lumi/core/config/api_config.dart';
 import 'package:lumi/core/config/app_settings.dart';
 import 'package:lumi/core/utils/logger.dart';
 import 'package:lumi/features/memory/data/memory_repository.dart';
+import 'package:lumi/features/memory/domain/context_manager.dart';
+import 'package:lumi/features/memory/domain/memory_evaluator.dart';
 import 'package:lumi/features/memory/presentation/providers/memory_provider.dart';
 import 'package:lumi/features/soul/data/llm_client.dart';
 import 'package:lumi/features/soul/data/response_parser.dart';
@@ -48,6 +50,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final PersonaConfig _persona;
   final LLMSettings _llmSettings;
   final _uuid = const Uuid();
+  final _contextManager = ContextManager();
+  final _memoryEvaluator = MemoryEvaluator();
 
   ChatNotifier({
     LLMClient? llmClient,
@@ -96,44 +100,29 @@ class ChatNotifier extends StateNotifier<ChatState> {
       EmotionType emotion;
 
       if (_llmClient != null) {
-        // 构建上下文 - 取最近的消息（排除刚添加的用户消息）
-        final recentMessages = state.messages.length > 1
-            ? state.messages.sublist(0, state.messages.length - 1)
-            : <ChatMessage>[];
-        
-        // 取最近 20 条作为上下文
-        final contextMessages = recentMessages.length > 2000
-            ? recentMessages.sublist(recentMessages.length - 2000)
-            : recentMessages;
-
-        final history = [
-          ...contextMessages.map((m) => {
-                'role': m.isUser ? 'user' : 'assistant',
-                'content': m.content,
-              }),
-          // 添加当前用户消息
-          {'role': 'user', 'content': content},
-        ];
-
-        AppLogger.d('Sending ${history.length} messages to LLM');
-        for (var i = 0; i < history.length; i++) {
-          AppLogger.d('  [$i] ${history[i]['role']}: ${history[i]['content']}');
-        }
-
         // 获取相关记忆 (RAG)
-        String memorySummary = '';
+        List<String> relevantMemories = [];
         if (_memoryRepo != null) {
-          memorySummary = await _memoryRepo.getMemorySummary(limit: 3);
+          relevantMemories = await _memoryRepo.searchRelevantMemories(content, limit: 5);
         }
+
+        // 使用上下文管理器构建上下文
+        final context = _contextManager.buildContext(
+          allMessages: state.messages.sublist(0, state.messages.length - 1), // 排除刚添加的用户消息
+          currentInput: content,
+          memories: relevantMemories,
+        );
+
+        AppLogger.d('Context: ${context.includedMessageCount}/${context.totalMessageCount} messages, hasMemories: ${context.hasMemories}');
 
         // 构建增强的系统提示
-        final enhancedPrompt = memorySummary.isNotEmpty
-            ? '${_persona.systemPrompt}\n\n$memorySummary'
+        final enhancedPrompt = context.hasMemories
+            ? '${_persona.systemPrompt}\n\n${context.memorySummary}'
             : _persona.systemPrompt;
 
         final response = await _llmClient.chat(
           systemPrompt: enhancedPrompt,
-          messages: history,
+          messages: context.messages,
           temperature: _llmSettings.temperature,
           maxTokens: _llmSettings.maxTokens,
           topP: _llmSettings.topP,
@@ -188,16 +177,17 @@ class ChatNotifier extends StateNotifier<ChatState> {
   Future<void> _extractAndSaveMemory(String userInput, String aiResponse) async {
     if (_memoryRepo == null) return;
 
-    // 简单规则：如果用户提到"喜欢"、"讨厌"、"名字"等关键词，保存为记忆
-    final keywords = ['喜欢', '讨厌', '名字叫', '我是', '生日', '工作', '住在'];
-    for (final keyword in keywords) {
-      if (userInput.contains(keyword)) {
-        await _memoryRepo.saveMemory(
-          '用户说: $userInput',
-          importance: 0.8,
-        );
-        break;
-      }
+    // 使用记忆评估器判断是否值得记忆
+    final evaluation = _memoryEvaluator.evaluate(userInput, aiResponse: aiResponse);
+    
+    if (evaluation.shouldRemember) {
+      // 使用带去重的保存方法
+      await _memoryRepo.saveMemoryWithDedup(
+        '用户说: ${evaluation.suggestedContent}',
+        importance: evaluation.score,
+      );
+      AppLogger.d('Memory evaluation (score: ${evaluation.score.toStringAsFixed(2)}): ${evaluation.suggestedContent}');
+      AppLogger.d('Reasons: ${evaluation.reasons.join(', ')}');
     }
   }
 

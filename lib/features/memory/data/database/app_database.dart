@@ -237,6 +237,25 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  /// 更新记忆重要性
+  Future<void> updateMemoryImportance(int id, double importance) async {
+    await (update(memories)..where((t) => t.id.equals(id))).write(
+      MemoriesCompanion(
+        importance: Value(importance),
+      ),
+    );
+  }
+
+  /// 删除记忆
+  Future<int> deleteMemory(int id) {
+    return (delete(memories)..where((t) => t.id.equals(id))).go();
+  }
+
+  /// 清空所有记忆
+  Future<int> clearMemories() {
+    return delete(memories).go();
+  }
+
   // ═══════════════════════════════════════════════════════════════════
   //                      设置操作
   // ═══════════════════════════════════════════════════════════════════

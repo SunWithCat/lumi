@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/config/app_settings.dart';
+import 'package:lumi/features/memory/presentation/pages/memory_management_page.dart';
 import 'package:lumi/features/settings/presentation/pages/llm_settings_page.dart';
 import 'package:lumi/features/soul/presentation/pages/persona_settings_page.dart';
 
@@ -47,6 +48,17 @@ class SettingsPage extends ConsumerWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const LLMSettingsPage()),
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildSectionTitle('数据'),
+          _buildSettingCard(
+            icon: Icons.memory_rounded,
+            title: '记忆管理',
+            subtitle: '查看、删除或压缩 AI 的记忆',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MemoryManagementPage()),
             ),
           ),
           const SizedBox(height: 24),
