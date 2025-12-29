@@ -51,7 +51,4 @@ flutter:
   
   assets:
     - assets/live2d/
-    - assets/live2d/hiyori_free_zh/runtime/
-    - assets/live2d/hiyori_free_zh/runtime/hiyori_free_t08.2048/
-    - assets/live2d/hiyori_free_zh/runtime/motion/
     - assets/images/
