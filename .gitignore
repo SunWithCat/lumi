@@ -59,3 +59,6 @@ app.*.map.json
 # Live2D 模型资源 (版权原因，不上传)
 /assets/live2d/
 /android/app/src/main/assets/live2d/
+
+# 文档 (仅供本地学习使用)
+/docs/
