@@ -62,3 +62,4 @@ app.*.map.json
 
 # 文档 (仅供本地学习使用)
 /docs/
+.kiro/

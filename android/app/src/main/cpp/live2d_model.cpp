@@ -27,6 +27,9 @@ static JavaVM* g_javaVM = nullptr;
 static jclass g_live2dNativeClass = nullptr;
 static jmethodID g_loadTextureMethod = nullptr;
 
+// 全局模型实例指针（用于回调）
+Live2DModel* Live2DModel::s_instance = nullptr;
+
 void Live2DModel::SetJavaVM(JavaVM* vm) {
     g_javaVM = vm;
 }
@@ -51,7 +54,11 @@ Live2DModel::Live2DModel()
     , _motionManager(nullptr)
     , _expressionManager(nullptr)
     , _lookAtX(0.0f)
-    , _lookAtY(0.0f) {
+    , _lookAtY(0.0f)
+    , _idleMotionCount(0) {
+    
+    // 设置全局实例指针（用于回调）
+    s_instance = this;
     
     _idParamAngleX = CubismFramework::GetIdManager()->GetId(ParamAngleX);
     _idParamAngleY = CubismFramework::GetIdManager()->GetId(ParamAngleY);
@@ -62,6 +69,11 @@ Live2DModel::Live2DModel()
 }
 
 Live2DModel::~Live2DModel() {
+    // 清除全局实例指针
+    if (s_instance == this) {
+        s_instance = nullptr;
+    }
+    
     ReleaseMotions();
     ReleaseExpressions();
     
@@ -187,10 +199,20 @@ void Live2DModel::SetupModel(AAssetManager* assetManager, const std::string& dir
     // 预加载动作
     PreloadMotions(assetManager, dir);
     
+    // 记录 Idle 动作数量
+    _idleMotionCount = _modelSetting->GetMotionCount("Idle");
+    LOGI("Idle motion count: %d", _idleMotionCount);
+    
     // 初始化 Pose 状态（重要：解决多余手臂问题）
     if (_pose) {
         _pose->Reset(_model);
         LOGI("Pose reset");
+    }
+    
+    // 启动初始 Idle 动作
+    if (_idleMotionCount > 0) {
+        StartRandomIdleMotion();
+        LOGI("Initial idle motion started");
     }
 }
 
@@ -361,14 +383,10 @@ void Live2DModel::PreloadMotions(AAssetManager* assetManager, const std::string&
 void Live2DModel::Update(float deltaTime) {
     _model->LoadParameters();
     
+    // 更新动作（回调会在动作结束时自动触发下一个 Idle）
     bool motionUpdated = _motionManager->UpdateMotion(_model, deltaTime);
     
-    // 如果没有动作在播放，自动播放 idle 动作
-    if (!motionUpdated && _motionManager->IsFinished()) {
-        // 尝试播放 Idle 动作
-        StartMotion("Idle", 0, 1);
-    }
-    
+    // 眨眼效果（仅在动作没有控制眼睛时生效）
     if (!motionUpdated) {
         if (_eyeBlink) {
             _eyeBlink->UpdateParameters(_model, deltaTime);
@@ -434,10 +452,64 @@ void Live2DModel::StartMotion(const std::string& group, int index, int priority)
     CubismMotion* motion = static_cast<CubismMotion*>(_motions[name.c_str()]);
     
     if (motion) {
+        // 清除所有动作的回调，防止被打断的动作残留回调干扰
+        ClearAllMotionCallbacks();
+        
+        // 设置新动作的结束回调
+        motion->SetFinishedMotionHandler(OnMotionFinished);
+        
         _motionManager->StartMotionPriority(motion, false, priority);
-        LOGI("Start motion: %s", name.c_str());
+        LOGI("Start motion: %s (with callback)", name.c_str());
     } else {
         LOGE("Motion not found: %s", name.c_str());
+    }
+}
+
+// 动作结束回调 - 静态函数
+void Live2DModel::OnMotionFinished(ACubismMotion* motion) {
+    LOGI("Motion finished callback triggered");
+    
+    // 通过全局实例启动下一个 Idle 动作
+    if (s_instance) {
+        s_instance->StartRandomIdleMotion();
+    }
+}
+
+// 清除所有动作的回调（防止被打断的动作残留回调干扰新动作）
+void Live2DModel::ClearAllMotionCallbacks() {
+    for (auto iter = _motions.Begin(); iter != _motions.End(); ++iter) {
+        if (iter->Second) {
+            iter->Second->SetFinishedMotionHandler(nullptr);
+        }
+    }
+    LOGI("Cleared all motion callbacks");
+}
+
+// 播放随机 Idle 动作
+void Live2DModel::StartRandomIdleMotion() {
+    if (_idleMotionCount <= 0) {
+        LOGI("No idle motions available");
+        return;
+    }
+    
+    // 随机选择一个 Idle 动作
+    int index = rand() % _idleMotionCount;
+    std::string name = "Idle_" + std::to_string(index);
+    
+    CubismMotion* motion = static_cast<CubismMotion*>(_motions[name.c_str()]);
+    
+    if (motion) {
+        // 清除所有动作的回调，防止残留回调干扰
+        ClearAllMotionCallbacks();
+        
+        // 设置动作结束回调（Idle 结束后继续播放下一个 Idle）
+        motion->SetFinishedMotionHandler(OnMotionFinished);
+        
+        // 使用最低优先级，这样情感动作可以打断它
+        _motionManager->StartMotionPriority(motion, false, 1);
+        LOGI("Start random idle motion: %s", name.c_str());
+    } else {
+        LOGE("Idle motion not found: %s", name.c_str());
     }
 }
 

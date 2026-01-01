@@ -234,7 +234,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
     final safeTop = MediaQuery.of(context).padding.top;
 
     const minLive2DSpace = 280.0;
-    const defaultChatHeight = 320.0;
+    const defaultChatHeight = 280.0;
 
     final availableHeight =
         screenHeight - safeTop - minLive2DSpace - keyboardHeight;
@@ -255,7 +255,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
           curve: Curves.easeOutCubic,
           height: chatHeight,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Colors.white.withValues(alpha: 0.7),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
             boxShadow: [
               BoxShadow(

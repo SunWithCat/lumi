@@ -387,7 +387,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('保存', style: TextStyle(fontSize: 16)),
+                  child: const Text('保存', style: TextStyle(fontSize: 16, color: Colors.white)),
                 ),
               ),
             ],
