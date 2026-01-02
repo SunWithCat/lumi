@@ -89,7 +89,38 @@ class PersonaNotifier extends StateNotifier<AsyncValue<PersonaConfig>> {
     _ref.invalidate(allPersonasProvider);
   }
 
-  /// 更新当前人格
+  /// 创建自定义人格（基于当前人格，但创建新的而不是修改原有）
+  Future<void> createCustomPersona({
+    required String name,
+    required String bio,
+    required String userTitle,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    
+    // 创建新的人格配置，不带 customSystemPrompt，强制根据属性生成
+    final newPersona = PersonaConfig(
+      id: '',  // 新人格，ID 由数据库生成
+      name: name,
+      age: current.age,
+      bio: bio,
+      traits: current.traits,
+      speakingStyle: current.speakingStyle,
+      userTitle: userTitle,
+      baselineEmotion: current.baselineEmotion,
+      emotionalSensitivity: current.emotionalSensitivity,
+      customSystemPrompt: null,  // 清空，强制使用属性生成
+      isActive: false,
+    );
+    
+    // 添加新人格到数据库
+    final newId = await _repo.addPersona(newPersona);
+    
+    // 激活新人格
+    await setPersonaById(newId);
+  }
+  
+  /// 更新已有人格（用于编辑自定义人格，不是预设）
   Future<void> updatePersona({
     String? name,
     String? bio,
@@ -100,17 +131,26 @@ class PersonaNotifier extends StateNotifier<AsyncValue<PersonaConfig>> {
     
     final personaId = int.tryParse(current.id);
     if (personaId != null) {
-      // 生成新的 systemPrompt
-      final updated = current.copyWith(
-        name: name,
-        bio: bio,
-        userTitle: userTitle,
+      // 创建一个没有 customSystemPrompt 的副本，强制重新生成 systemPrompt
+      final updated = PersonaConfig(
+        id: current.id,
+        name: name ?? current.name,
+        age: current.age,
+        bio: bio ?? current.bio,
+        traits: current.traits,
+        speakingStyle: current.speakingStyle,
+        userTitle: userTitle ?? current.userTitle,
+        baselineEmotion: current.baselineEmotion,
+        emotionalSensitivity: current.emotionalSensitivity,
+        customSystemPrompt: null,  // 清空，强制使用属性生成
+        isActive: current.isActive,
       );
+      
       await _repo.updatePersona(
         personaId,
         name: name,
         description: bio,
-        systemPrompt: updated.systemPrompt,
+        systemPrompt: updated.systemPrompt,  // 现在会根据新属性生成
       );
       await _loadCurrentPersona();
       _ref.invalidate(allPersonasProvider);
