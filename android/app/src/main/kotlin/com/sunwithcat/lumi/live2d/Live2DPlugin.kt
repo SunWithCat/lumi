@@ -64,6 +64,8 @@ class Live2DPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, EventChanne
             "setExpression" -> handleSetExpression(call, result)
             "hitTest" -> handleHitTest(call, result)
             "setLookAt" -> handleSetLookAt(call, result)
+            "pause" -> handlePause(result)
+            "resume" -> handleResume(result)
             else -> result.notImplemented()
         }
     }
@@ -233,6 +235,36 @@ class Live2DPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, EventChanne
             result.success(null)
         } catch (e: Exception) {
             result.error("LOOK_AT_ERROR", e.message, null)
+        }
+    }
+
+    private fun handlePause(result: MethodChannel.Result) {
+        if (!isNativeAvailable) {
+            result.success(null)
+            return
+        }
+
+        try {
+            Live2DNative.nativePause()
+            Log.d(TAG, "Renderer paused")
+            result.success(null)
+        } catch (e: Exception) {
+            result.error("PAUSE_ERROR", e.message, null)
+        }
+    }
+
+    private fun handleResume(result: MethodChannel.Result) {
+        if (!isNativeAvailable) {
+            result.success(null)
+            return
+        }
+
+        try {
+            Live2DNative.nativeResume()
+            Log.d(TAG, "Renderer resumed")
+            result.success(null)
+        } catch (e: Exception) {
+            result.error("RESUME_ERROR", e.message, null)
         }
     }
 

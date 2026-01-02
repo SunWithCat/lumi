@@ -13,11 +13,15 @@ import 'package:lumi/features/soul/presentation/providers/chat_provider.dart';
 class LumiHomePage extends ConsumerStatefulWidget {
   const LumiHomePage({super.key});
 
+  // 路由观察者（用于监听页面切换，暂停/恢复 Live2D）
+  static final RouteObserver<ModalRoute<void>> routeObserver = 
+      RouteObserver<ModalRoute<void>>();
+
   @override
   ConsumerState<LumiHomePage> createState() => _LumiHomePageState();
 }
 
-class _LumiHomePageState extends ConsumerState<LumiHomePage> {
+class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   late Live2DController _live2dController;
   bool _live2dInitialized = false;
   final ScrollController _scrollController = ScrollController();
@@ -32,6 +36,34 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
     super.initState();
     _live2dController = ref.read(live2dControllerProvider);
     _initLive2D();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 订阅路由变化
+    LumiHomePage.routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    LumiHomePage.routeObserver.unsubscribe(this);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // 当前页面被其他页面覆盖时调用（进入设置页）
+  @override
+  void didPushNext() {
+    debugPrint('LumiHomePage: didPushNext - pausing Live2D');
+    _live2dController.pause();
+  }
+
+  // 从其他页面返回到当前页面时调用（从设置页返回）
+  @override
+  void didPopNext() {
+    debugPrint('LumiHomePage: didPopNext - resuming Live2D');
+    _live2dController.resume();
   }
 
   Future<void> _initLive2D() async {
@@ -81,12 +113,6 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> {
         );
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
   }
 
   @override

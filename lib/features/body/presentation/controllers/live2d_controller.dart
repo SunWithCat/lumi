@@ -122,6 +122,30 @@ class Live2DController extends ChangeNotifier {
     }
   }
 
+  /// 暂停渲染（页面不可见时调用）
+  Future<void> pause() async {
+    if (!_isInitialized) return;
+
+    try {
+      await _channel.invokeMethod('pause');
+      AppLogger.i('Live2D paused');
+    } on PlatformException catch (e) {
+      AppLogger.e('Pause failed', e);
+    }
+  }
+
+  /// 恢复渲染（页面可见时调用）
+  Future<void> resume() async {
+    if (!_isInitialized) return;
+
+    try {
+      await _channel.invokeMethod('resume');
+      AppLogger.i('Live2D resumed');
+    } on PlatformException catch (e) {
+      AppLogger.e('Resume failed', e);
+    }
+  }
+
   void _subscribeEvents() {
     _eventSubscription = _eventChannel.receiveBroadcastStream().listen(
       (event) {

@@ -12,6 +12,8 @@ class LumiApp extends StatelessWidget {
       theme: AppTheme.romantic,
       home: const LumiHomePage(),
       debugShowCheckedModeBanner: false,
+      // 注册路由观察者，用于监听页面切换
+      navigatorObservers: [LumiHomePage.routeObserver],
     );
   }
 }

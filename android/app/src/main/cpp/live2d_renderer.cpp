@@ -264,11 +264,6 @@ void Live2DRenderer::RenderLoop() {
         
         lastTime = currentTime;
         
-        if (!_isRunning.load()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            continue;
-        }
-        
         {
             std::lock_guard<std::mutex> lock(_modelMutex);
             
@@ -295,7 +290,8 @@ void Live2DRenderer::RenderLoop() {
                 _modelLoadRequested = false;
             }
             
-            if (_model) {
+            // 只有在运行状态才更新模型（暂停时保持静止）
+            if (_model && _isRunning.load()) {
                 _model->Update(deltaTime);
             }
             
