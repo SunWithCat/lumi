@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumi/core/theme/app_theme.dart';
 import 'package:lumi/features/soul/domain/entities/persona_config.dart';
 import 'package:lumi/features/soul/presentation/providers/persona_provider.dart';
 
@@ -7,31 +8,32 @@ class PersonaSettingsPage extends ConsumerStatefulWidget {
   const PersonaSettingsPage({super.key});
 
   @override
-  ConsumerState<PersonaSettingsPage> createState() => _PersonaSettingsPageState();
+  ConsumerState<PersonaSettingsPage> createState() =>
+      _PersonaSettingsPageState();
 }
 
 class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
-  static const _primaryPink = Color(0xFFFF85A2);
-  static const _lightPink = Color(0xFFFFE4EC);
-
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
     final personaAsync = ref.watch(currentPersonaProvider);
     final allPersonasAsync = ref.watch(allPersonasProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF5F7),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text('人格设置', style: TextStyle(color: Color(0xFF333333))),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: _primaryPink),
+          icon: Icon(Icons.arrow_back_ios, color: colorScheme.primary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: personaAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: _primaryPink)),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: colorScheme.primary),
+        ),
         error: (e, _) => Center(child: Text('加载失败: $e')),
         data: (currentPersona) => ListView(
           padding: const EdgeInsets.all(16),
@@ -51,17 +53,21 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
             ),
             const SizedBox(height: 12),
             allPersonasAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator(color: _primaryPink)),
+              loading: () => Center(
+                child: CircularProgressIndicator(color: colorScheme.primary),
+              ),
               error: (e, _) => Text('加载失败: $e'),
               data: (personas) => Column(
-                children: personas.map((p) => _buildPersonaCard(p, currentPersona)).toList(),
+                children: personas
+                    .map((p) => _buildPersonaCard(context, p, currentPersona))
+                    .toList(),
               ),
             ),
 
             const SizedBox(height: 24),
 
             // 自定义按钮
-            _buildCustomizeButton(currentPersona),
+            _buildCustomizeButton(context, currentPersona),
           ],
         ),
       ),
@@ -69,16 +75,20 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
   }
 
   Widget _buildCurrentPersonaCard(PersonaConfig persona) {
+    final lumiColors = context.lumiColors;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFF85A2), Color(0xFFFF6B8A)],
+        gradient: LinearGradient(
+          colors: [
+            lumiColors.primaryGradientStart,
+            lumiColors.primaryGradientEnd,
+          ],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: _primaryPink.withValues(alpha:0.3),
+            color: lumiColors.shadowColor.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -93,7 +103,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha:0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -124,16 +134,19 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                       persona.age,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.white.withValues(alpha:0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha:0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
@@ -148,7 +161,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
             persona.bio,
             style: TextStyle(
               fontSize: 14,
-              color: Colors.white.withValues(alpha:0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               height: 1.5,
             ),
           ),
@@ -156,21 +169,29 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: persona.traits.map((t) => _buildTraitChip(t, true)).toList(),
+            children: persona.traits
+                .map((t) => _buildTraitChip(context, t, true))
+                .toList(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPersonaCard(PersonaConfig persona, PersonaConfig current) {
+  Widget _buildPersonaCard(
+    BuildContext context,
+    PersonaConfig persona,
+    PersonaConfig current,
+  ) {
+    final colorScheme = context.colorScheme;
     final isSelected = persona.id == current.id;
     final personaId = int.tryParse(persona.id) ?? 0;
-    final isPreset = personaId <= 3;  // ID 1-3 是预设人格
+    final isPreset = personaId <= 3; // ID 1-3 是预设人格
 
     return GestureDetector(
-      onTap: isSelected ? null : () => _selectPersona(persona),
-      onLongPress: () => _showDeleteDialog(persona, isSelected, isPreset),
+      onTap: isSelected ? null : () => _selectPersona(context, persona),
+      onLongPress: () =>
+          _showDeleteDialog(context, persona, isSelected, isPreset),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
@@ -178,11 +199,11 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: isSelected
-              ? Border.all(color: _primaryPink, width: 2)
+              ? Border.all(color: colorScheme.primary, width: 2)
               : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha:0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -194,7 +215,9 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: isSelected ? _primaryPink : _lightPink,
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.secondary.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -203,7 +226,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.white : _primaryPink,
+                    color: isSelected ? Colors.white : colorScheme.primary,
                   ),
                 ),
               ),
@@ -226,14 +249,20 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                       const SizedBox(width: 8),
                       if (!isPreset)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
-                            color: _lightPink,
+                            color: colorScheme.secondary.withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             '自定义',
-                            style: TextStyle(fontSize: 10, color: _primaryPink),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: colorScheme.primary,
+                            ),
                           ),
                         ),
                     ],
@@ -241,10 +270,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                   const SizedBox(height: 4),
                   Text(
                     persona.bio,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -252,7 +278,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle, color: _primaryPink, size: 24)
+              Icon(Icons.check_circle, color: colorScheme.primary, size: 24)
             else
               Icon(Icons.circle_outlined, color: Colors.grey[300], size: 24),
           ],
@@ -261,7 +287,13 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
     );
   }
 
-  void _showDeleteDialog(PersonaConfig persona, bool isSelected, bool isPreset) {
+  void _showDeleteDialog(
+    BuildContext context,
+    PersonaConfig persona,
+    bool isSelected,
+    bool isPreset,
+  ) {
+    final colorScheme = context.colorScheme;
     final personaId = int.tryParse(persona.id);
     if (personaId == null) return;
 
@@ -271,7 +303,9 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
           content: const Text('预设人格无法删除'),
           backgroundColor: Colors.grey[600],
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -283,7 +317,9 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
           content: const Text('请先切换到其他人格再删除'),
           backgroundColor: Colors.grey[600],
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -302,14 +338,18 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
           ),
           TextButton(
             onPressed: () {
-              ref.read(currentPersonaProvider.notifier).deletePersona(personaId);
+              ref
+                  .read(currentPersonaProvider.notifier)
+                  .deletePersona(personaId);
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('已删除「${persona.name}」'),
-                  backgroundColor: _primaryPink,
+                  backgroundColor: colorScheme.primary,
                   behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               );
             },
@@ -320,59 +360,66 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
     );
   }
 
-  void _selectPersona(PersonaConfig persona) {
+  void _selectPersona(BuildContext context, PersonaConfig persona) {
+    final colorScheme = context.colorScheme;
     final personaId = int.tryParse(persona.id);
     if (personaId != null) {
       ref.read(currentPersonaProvider.notifier).setPersonaById(personaId);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('已切换为 ${persona.name}'),
-          backgroundColor: _primaryPink,
+          backgroundColor: colorScheme.primary,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
   }
 
-  Widget _buildTraitChip(String trait, bool isWhite) {
+  Widget _buildTraitChip(BuildContext context, String trait, bool isWhite) {
+    final colorScheme = context.colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isWhite ? Colors.white.withValues(alpha:0.2) : _lightPink,
+        color: isWhite
+            ? Colors.white.withValues(alpha: 0.2)
+            : colorScheme.secondary.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         trait,
         style: TextStyle(
           fontSize: 12,
-          color: isWhite ? Colors.white : _primaryPink,
+          color: isWhite ? Colors.white : colorScheme.primary,
         ),
       ),
     );
   }
 
-  Widget _buildCustomizeButton(PersonaConfig current) {
+  Widget _buildCustomizeButton(BuildContext context, PersonaConfig current) {
+    final colorScheme = context.colorScheme;
     return GestureDetector(
-      onTap: () => _showCustomizeDialog(current),
+      onTap: () => _showCustomizeDialog(context, current),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _primaryPink.withValues(alpha:0.3)),
+          border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.edit_rounded, color: _primaryPink, size: 20),
+            Icon(Icons.edit_rounded, color: colorScheme.primary, size: 20),
             const SizedBox(width: 8),
             Text(
               '自定义人格',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
-                color: _primaryPink,
+                color: colorScheme.primary,
               ),
             ),
           ],
@@ -381,7 +428,8 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
     );
   }
 
-  void _showCustomizeDialog(PersonaConfig current) {
+  void _showCustomizeDialog(BuildContext context, PersonaConfig current) {
+    final colorScheme = context.colorScheme;
     final nameController = TextEditingController(text: '');
     final bioController = TextEditingController(text: '');
     final userTitleController = TextEditingController(text: '主人');
@@ -409,7 +457,10 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                   children: [
                     const Text(
                       '创建自定义人格',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),
@@ -436,11 +487,27 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildTextField('名字', nameController, hint: '给你的角色起个名字'),
+                      _buildTextField(
+                        context,
+                        '名字',
+                        nameController,
+                        hint: '给你的角色起个名字',
+                      ),
                       const SizedBox(height: 16),
-                      _buildTextField('简介', bioController, maxLines: 3, hint: '描述角色的性格和背景'),
+                      _buildTextField(
+                        context,
+                        '简介',
+                        bioController,
+                        maxLines: 3,
+                        hint: '描述角色的性格和背景',
+                      ),
                       const SizedBox(height: 16),
-                      _buildTextField('称呼用户为', userTitleController, hint: '例如：主人、哥哥、你'),
+                      _buildTextField(
+                        context,
+                        '称呼用户为',
+                        userTitleController,
+                        hint: '例如：主人、哥哥、你',
+                      ),
                       const SizedBox(height: 24),
                     ],
                   ),
@@ -455,7 +522,10 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                     child: Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.red[50],
                         borderRadius: BorderRadius.circular(10),
@@ -463,11 +533,18 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline, color: Colors.red[400], size: 18),
+                          Icon(
+                            Icons.error_outline,
+                            color: Colors.red[400],
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             error,
-                            style: TextStyle(color: Colors.red[700], fontSize: 13),
+                            style: TextStyle(
+                              color: Colors.red[700],
+                              fontSize: 13,
+                            ),
                           ),
                         ],
                       ),
@@ -485,23 +562,25 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                       final name = nameController.text.trim();
                       final bio = bioController.text.trim();
                       final userTitle = userTitleController.text.trim();
-                      
+
                       if (name.isEmpty) {
                         errorNotifier.value = '请输入角色名字';
                         return;
                       }
-                      
+
                       errorNotifier.value = null;
-                      ref.read(currentPersonaProvider.notifier).createCustomPersona(
-                        name: name,
-                        bio: bio.isNotEmpty ? bio : '一个可爱的AI伙伴',
-                        userTitle: userTitle.isNotEmpty ? userTitle : '主人',
-                      );
+                      ref
+                          .read(currentPersonaProvider.notifier)
+                          .createCustomPersona(
+                            name: name,
+                            bio: bio.isNotEmpty ? bio : '一个可爱的AI伙伴',
+                            userTitle: userTitle.isNotEmpty ? userTitle : '主人',
+                          );
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('已创建并切换到 $name'),
-                          backgroundColor: _primaryPink,
+                          backgroundColor: colorScheme.primary,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -510,13 +589,16 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _primaryPink,
+                      backgroundColor: colorScheme.primary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('创建并使用', style: TextStyle(fontSize: 16, color: Colors.white)),
+                    child: const Text(
+                      '创建并使用',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
                   ),
                 ),
               ),
@@ -527,7 +609,14 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, String? hint}) {
+  Widget _buildTextField(
+    BuildContext context,
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+    String? hint,
+  }) {
+    final colorScheme = context.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -545,12 +634,15 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
           maxLines: maxLines,
           decoration: InputDecoration(
             filled: true,
-            fillColor: _lightPink.withValues(alpha:0.3),
+            fillColor: colorScheme.secondary.withValues(alpha: 0.3),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/config/app_settings.dart';
+import 'package:lumi/core/theme/app_theme.dart';
 
 class LLMSettingsPage extends ConsumerStatefulWidget {
   const LLMSettingsPage({super.key});
@@ -10,31 +11,30 @@ class LLMSettingsPage extends ConsumerStatefulWidget {
 }
 
 class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
-  static const _primaryPink = Color(0xFFFF85A2);
-  static const _lightPink = Color(0xFFFFE4EC);
-
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
     final settings = ref.watch(appSettingsProvider);
     final llm = settings.llmSettings;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF5F7),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text('LLM 参数', style: TextStyle(color: Color(0xFF333333))),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: _primaryPink),
+          icon: Icon(Icons.arrow_back_ios, color: colorScheme.primary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildInfoCard(),
+          _buildInfoCard(context),
           const SizedBox(height: 20),
           _buildSliderCard(
+            context: context,
             title: '回复长度',
             subtitle: 'Max Tokens: ${llm.maxTokens}',
             description: '控制回复的最大长度，越大回复越详细',
@@ -42,11 +42,14 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
             min: 100,
             max: 2000,
             divisions: 19,
-            onChanged: (v) => ref.read(appSettingsProvider.notifier).setLLMMaxTokens(v.round()),
+            onChanged: (v) => ref
+                .read(appSettingsProvider.notifier)
+                .setLLMMaxTokens(v.round()),
             valueLabel: _getMaxTokensLabel(llm.maxTokens),
           ),
           const SizedBox(height: 16),
           _buildSliderCard(
+            context: context,
             title: '创意度',
             subtitle: 'Temperature: ${llm.temperature.toStringAsFixed(1)}',
             description: '越高回复越随机有创意，越低越稳定一致',
@@ -54,11 +57,13 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
             min: 0.0,
             max: 2.0,
             divisions: 20,
-            onChanged: (v) => ref.read(appSettingsProvider.notifier).setLLMTemperature(v),
+            onChanged: (v) =>
+                ref.read(appSettingsProvider.notifier).setLLMTemperature(v),
             valueLabel: _getTemperatureLabel(llm.temperature),
           ),
           const SizedBox(height: 16),
           _buildSliderCard(
+            context: context,
             title: '采样范围',
             subtitle: 'Top P: ${llm.topP.toStringAsFixed(1)}',
             description: '控制词汇选择范围，通常保持 1.0 即可',
@@ -66,26 +71,32 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
             min: 0.1,
             max: 1.0,
             divisions: 9,
-            onChanged: (v) => ref.read(appSettingsProvider.notifier).setLLMTopP(v),
+            onChanged: (v) =>
+                ref.read(appSettingsProvider.notifier).setLLMTopP(v),
             valueLabel: _getTopPLabel(llm.topP),
           ),
           const SizedBox(height: 20),
-          _buildPresetButtons(),
+          _buildPresetButtons(context),
         ],
       ),
     );
   }
 
-  Widget _buildInfoCard() {
+  Widget _buildInfoCard(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _lightPink.withValues(alpha: 0.5),
+        color: colorScheme.secondary.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          const Icon(Icons.lightbulb_outline_rounded, color: _primaryPink, size: 20),
+          Icon(
+            Icons.lightbulb_outline_rounded,
+            color: colorScheme.primary,
+            size: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -99,6 +110,7 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
   }
 
   Widget _buildSliderCard({
+    required BuildContext context,
     required String title,
     required String subtitle,
     required String description,
@@ -109,6 +121,7 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
     required ValueChanged<double> onChanged,
     required String valueLabel,
   }) {
+    final colorScheme = context.colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -137,17 +150,20 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: _lightPink,
+                  color: colorScheme.secondary.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   valueLabel,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: _primaryPink,
+                    color: colorScheme.primary,
                   ),
                 ),
               ),
@@ -161,10 +177,10 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
           const SizedBox(height: 12),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: _primaryPink,
-              inactiveTrackColor: _lightPink,
-              thumbColor: _primaryPink,
-              overlayColor: _primaryPink.withValues(alpha: 0.2),
+              activeTrackColor: colorScheme.primary,
+              inactiveTrackColor: colorScheme.secondary.withValues(alpha: 0.3),
+              thumbColor: colorScheme.primary,
+              overlayColor: colorScheme.primary.withValues(alpha: 0.2),
               trackHeight: 4,
             ),
             child: Slider(
@@ -184,7 +200,7 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
     );
   }
 
-  Widget _buildPresetButtons() {
+  Widget _buildPresetButtons(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -199,42 +215,49 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _buildPresetButton('简短', 200, 0.7, 1.0)),
+            Expanded(child: _buildPresetButton(context, '简短', 200, 0.7, 1.0)),
             const SizedBox(width: 10),
-            Expanded(child: _buildPresetButton('标准', 500, 0.7, 1.0)),
+            Expanded(child: _buildPresetButton(context, '标准', 500, 0.7, 1.0)),
             const SizedBox(width: 10),
-            Expanded(child: _buildPresetButton('详细', 1000, 0.8, 1.0)),
+            Expanded(child: _buildPresetButton(context, '详细', 1000, 0.8, 1.0)),
           ],
         ),
         const SizedBox(height: 10),
         Row(
           children: [
-            Expanded(child: _buildPresetButton('稳定', 500, 0.3, 1.0)),
+            Expanded(child: _buildPresetButton(context, '稳定', 500, 0.3, 1.0)),
             const SizedBox(width: 10),
-            Expanded(child: _buildPresetButton('平衡', 500, 0.7, 1.0)),
+            Expanded(child: _buildPresetButton(context, '平衡', 500, 0.7, 1.0)),
             const SizedBox(width: 10),
-            Expanded(child: _buildPresetButton('创意', 500, 1.2, 1.0)),
+            Expanded(child: _buildPresetButton(context, '创意', 500, 1.2, 1.0)),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildPresetButton(String label, int maxTokens, double temp, double topP) {
+  Widget _buildPresetButton(
+    BuildContext context,
+    String label,
+    int maxTokens,
+    double temp,
+    double topP,
+  ) {
+    final colorScheme = context.colorScheme;
     return GestureDetector(
       onTap: () {
         final notifier = ref.read(appSettingsProvider.notifier);
-        notifier.updateLLMSettings(LLMSettings(
-          maxTokens: maxTokens,
-          temperature: temp,
-          topP: topP,
-        ));
+        notifier.updateLLMSettings(
+          LLMSettings(maxTokens: maxTokens, temperature: temp, topP: topP),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('已应用「$label」预设'),
-            backgroundColor: _primaryPink,
+            backgroundColor: colorScheme.primary,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             duration: const Duration(seconds: 1),
           ),
         );
@@ -244,15 +267,18 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _lightPink, width: 1.5),
+          border: Border.all(
+            color: colorScheme.secondary.withValues(alpha: 0.5),
+            width: 1.5,
+          ),
         ),
         child: Center(
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: _primaryPink,
+              color: colorScheme.primary,
             ),
           ),
         ),

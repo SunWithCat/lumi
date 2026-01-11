@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumi/core/theme/app_theme.dart';
 import 'package:lumi/features/memory/domain/memory_compactor.dart';
 import 'package:lumi/features/memory/presentation/providers/memory_provider.dart';
 
 /// 记忆管理页面
-/// 
+///
 /// 功能：
 /// 1. 查看所有记忆
 /// 2. 删除单条记忆
@@ -14,13 +15,11 @@ class MemoryManagementPage extends ConsumerStatefulWidget {
   const MemoryManagementPage({super.key});
 
   @override
-  ConsumerState<MemoryManagementPage> createState() => _MemoryManagementPageState();
+  ConsumerState<MemoryManagementPage> createState() =>
+      _MemoryManagementPageState();
 }
 
 class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
-  static const _primaryPink = Color(0xFFFF85A2);
-  static const _lightPink = Color(0xFFFFE4EC);
-
   List<MemoryItem> _memories = [];
   bool _isLoading = true;
 
@@ -32,13 +31,13 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
 
   Future<void> _loadMemories() async {
     setState(() => _isLoading = true);
-    
+
     final repo = ref.read(memoryRepositoryProvider);
     final memories = await repo.getAllMemories();
-    
+
     // 按重要性排序
     memories.sort((a, b) => b.importance.compareTo(a.importance));
-    
+
     setState(() {
       _memories = memories;
       _isLoading = false;
@@ -47,10 +46,10 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
 
   Future<void> _runCompaction({bool dryRun = true}) async {
     setState(() => _isLoading = true);
-    
+
     final repo = ref.read(memoryRepositoryProvider);
     final result = await repo.compactMemories(dryRun: dryRun);
-    
+
     setState(() => _isLoading = false);
 
     if (dryRun) {
@@ -74,18 +73,31 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
           children: [
             _buildStatRow('总记忆数', '${result.totalMemories}'),
             _buildStatRow('可删除数', '${result.toRemoveCount}'),
-            _buildStatRow('节省空间', '${(result.estimatedSavings * 100).toStringAsFixed(1)}%'),
+            _buildStatRow(
+              '节省空间',
+              '${(result.estimatedSavings * 100).toStringAsFixed(1)}%',
+            ),
             const SizedBox(height: 12),
             if (result.mergeResults.isNotEmpty) ...[
-              const Text('相似记忆组:', style: TextStyle(fontWeight: FontWeight.w500)),
+              const Text(
+                '相似记忆组:',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               const SizedBox(height: 8),
-              ...result.mergeResults.take(3).map((merge) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  '• 保留: "${_truncate(merge.keep.content, 30)}"\n  删除 ${merge.remove.length} 条相似',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF666666)),
-                ),
-              )),
+              ...result.mergeResults
+                  .take(3)
+                  .map(
+                    (merge) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        '• 保留: "${_truncate(merge.keep.content, 30)}"\n  删除 ${merge.remove.length} 条相似',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF666666),
+                        ),
+                      ),
+                    ),
+                  ),
             ],
           ],
         ),
@@ -99,7 +111,10 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
               Navigator.pop(ctx);
               _runCompaction(dryRun: false);
             },
-            child: const Text('执行压缩', style: TextStyle(color: _primaryPink)),
+            child: Text(
+              '执行压缩',
+              style: TextStyle(color: context.colorScheme.primary),
+            ),
           ),
         ],
       ),
@@ -128,7 +143,7 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: _primaryPink,
+        backgroundColor: context.colorScheme.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -169,19 +184,20 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF5F7),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text('记忆管理', style: TextStyle(color: Color(0xFF333333))),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: _primaryPink),
+          icon: Icon(Icons.arrow_back_ios, color: colorScheme.primary),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: _primaryPink),
+            icon: Icon(Icons.more_vert, color: colorScheme.primary),
             onSelected: (value) {
               switch (value) {
                 case 'compact':
@@ -207,7 +223,11 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
                 value: 'clear',
                 child: Row(
                   children: [
-                    Icon(Icons.delete_forever_rounded, size: 20, color: Colors.redAccent),
+                    Icon(
+                      Icons.delete_forever_rounded,
+                      size: 20,
+                      color: Colors.redAccent,
+                    ),
                     SizedBox(width: 12),
                     Text('清空所有', style: TextStyle(color: Colors.redAccent)),
                   ],
@@ -218,38 +238,29 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _primaryPink))
+          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
           : _memories.isEmpty
-              ? _buildEmptyState()
-              : _buildMemoryList(),
+          ? _buildEmptyState()
+          : _buildMemoryList(),
     );
   }
 
   Widget _buildEmptyState() {
+    final colorScheme = context.colorScheme;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.memory_rounded,
-            size: 64,
-            color: _lightPink,
-          ),
+          Icon(Icons.memory_rounded, size: 64, color: colorScheme.secondary),
           const SizedBox(height: 16),
           Text(
             '还没有记忆',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey[500]),
           ),
           const SizedBox(height: 8),
           Text(
             '和 AI 聊天时会自动记住重要信息',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[400],
-            ),
+            style: TextStyle(fontSize: 13, color: Colors.grey[400]),
           ),
         ],
       ),
@@ -274,22 +285,27 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
   }
 
   Widget _buildStatsCard() {
+    final lumiColors = context.lumiColors;
     final totalCount = _memories.length;
     final avgImportance = _memories.isEmpty
         ? 0.0
-        : _memories.fold<double>(0, (sum, m) => sum + m.importance) / totalCount;
+        : _memories.fold<double>(0, (sum, m) => sum + m.importance) /
+              totalCount;
 
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [_primaryPink, Color(0xFFFF6B8A)],
+        gradient: LinearGradient(
+          colors: [
+            lumiColors.primaryGradientStart,
+            lumiColors.primaryGradientEnd,
+          ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: _primaryPink.withValues(alpha: 0.3),
+            color: lumiColors.shadowColor.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -331,7 +347,7 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
 
   Widget _buildMemoryCard(MemoryItem memory) {
     final importanceColor = _getImportanceColor(memory.importance);
-    
+
     return Dismissible(
       key: Key('memory_${memory.id}'),
       direction: DismissDirection.endToStart,
@@ -350,7 +366,9 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: const Text('删除记忆'),
             content: const Text('确定要删除这条记忆吗？'),
             actions: [
@@ -360,7 +378,10 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('删除', style: TextStyle(color: Colors.redAccent)),
+                child: const Text(
+                  '删除',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
               ),
             ],
           ),
@@ -446,7 +467,7 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final diff = now.difference(date);
-    
+
     if (diff.inDays == 0) {
       return '今天 ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     } else if (diff.inDays == 1) {

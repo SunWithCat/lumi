@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/config/app_settings.dart';
+import 'package:lumi/core/theme/app_theme.dart';
 import 'package:lumi/features/body/domain/emotion_motion_mapper.dart';
 import 'package:lumi/features/body/presentation/controllers/live2d_controller.dart';
 import 'package:lumi/features/body/presentation/providers/live2d_provider.dart';
@@ -14,7 +15,7 @@ class LumiHomePage extends ConsumerStatefulWidget {
   const LumiHomePage({super.key});
 
   // 路由观察者（用于监听页面切换，暂停/恢复 Live2D）
-  static final RouteObserver<ModalRoute<void>> routeObserver = 
+  static final RouteObserver<ModalRoute<void>> routeObserver =
       RouteObserver<ModalRoute<void>>();
 
   @override
@@ -27,9 +28,10 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   final ScrollController _scrollController = ScrollController();
 
   // 主题色
-  static const _gradientTop = Color(0xFFFFE4EC);
-  static const _primaryPink = Color(0xFFFF85A2);
-  static const _lightPink = Color(0xFFFFB6C8);
+
+  // static const _gradientTop = Color(0xFFFFE4EC);
+  // static const _primaryPink = Color(0xFFFF85A2);
+  // static const _lightPink = Color(0xFFFFB6C8);
 
   @override
   void initState() {
@@ -153,13 +155,19 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
 
   /// 背景渐变 + 装饰圆球
   Widget _buildBackground() {
+    final lumiColors = context.lumiColors;
+    final colorScheme = context.colorScheme;
     return Positioned.fill(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [_gradientTop, Color(0xFFFFF5F7), Colors.white],
+            colors: [
+              lumiColors.backgroundGradientTop,
+              lumiColors.backgroundGradientMiddle,
+              Colors.white,
+            ],
           ),
         ),
         child: Stack(
@@ -172,7 +180,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
                 height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _lightPink.withValues(alpha: 0.3),
+                  color: colorScheme.secondary.withValues(alpha: 0.3),
                 ),
               ),
             ),
@@ -184,7 +192,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
                 height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _primaryPink.withValues(alpha: 0.15),
+                  color: colorScheme.primary.withValues(alpha: 0.15),
                 ),
               ),
             ),
@@ -256,6 +264,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
 
   /// 聊天界面 - 带键盘动画
   Widget _buildChatInterface(ChatState chatState, double keyboardHeight) {
+    final colorScheme = context.colorScheme;
     final screenHeight = MediaQuery.of(context).size.height;
     final safeTop = MediaQuery.of(context).padding.top;
 
@@ -285,7 +294,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
             boxShadow: [
               BoxShadow(
-                color: _primaryPink.withValues(alpha: 0.1),
+                color: colorScheme.primary.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, -5),
               ),
@@ -298,7 +307,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: _lightPink.withValues(alpha: 0.5),
+                  color: colorScheme.secondary.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -317,6 +326,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   }
 
   Widget _buildMessageList(ChatState chatState) {
+    final colorScheme = context.colorScheme;
     if (chatState.messages.isEmpty) {
       return Center(
         child: Column(
@@ -325,13 +335,13 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
             Icon(
               Icons.favorite_border_rounded,
               size: 48,
-              color: _lightPink.withValues(alpha: 0.5),
+              color: colorScheme.secondary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 12),
             Text(
               '和我聊聊天吧~',
               style: TextStyle(
-                color: _primaryPink.withValues(alpha: 0.6),
+                color: colorScheme.primary.withValues(alpha: 0.6),
                 fontSize: 16,
               ),
             ),
@@ -356,6 +366,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   }
 
   Widget _buildLoadingIndicator() {
+    final colorScheme = context.colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -366,14 +377,14 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
             height: 14,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: _primaryPink.withValues(alpha: 0.6),
+              color: colorScheme.secondary.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(width: 8),
           Text(
             '思考中...',
             style: TextStyle(
-              color: _primaryPink.withValues(alpha: 0.6),
+              color: colorScheme.primary.withValues(alpha: 0.6),
               fontSize: 13,
             ),
           ),
@@ -418,7 +429,10 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
               ref.read(chatProvider.notifier).clearMessages();
               Navigator.pop(ctx);
             },
-            child: const Text('确定', style: TextStyle(color: _primaryPink)),
+            child: Text(
+              '确定',
+              style: TextStyle(color: context.colorScheme.primary),
+            ),
           ),
         ],
       ),
@@ -434,6 +448,7 @@ class _EmotionIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
@@ -441,7 +456,7 @@ class _EmotionIndicator extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFF85A2).withValues(alpha: 0.15),
+            color: colorScheme.primary.withValues(alpha: 0.15),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -455,7 +470,7 @@ class _EmotionIndicator extends StatelessWidget {
           Text(
             emotion.label,
             style: TextStyle(
-              color: const Color(0xFFFF85A2).withValues(alpha: 0.9),
+              color: colorScheme.primary.withValues(alpha: 0.9),
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
@@ -474,6 +489,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -483,13 +499,13 @@ class _ActionButton extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFF85A2).withValues(alpha: 0.15),
+              color: colorScheme.primary.withValues(alpha: 0.15),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Icon(icon, color: const Color(0xFFFF85A2), size: 20),
+        child: Icon(icon, color: colorScheme.primary, size: 20),
       ),
     );
   }
@@ -508,6 +524,7 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lumiColors = context.lumiColors;
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -518,11 +535,14 @@ class _MessageBubble extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           gradient: isUser
-              ? const LinearGradient(
-                  colors: [Color(0xFFFF85A2), Color(0xFFFF6B8A)],
+              ? LinearGradient(
+                  colors: [
+                    lumiColors.primaryGradientStart,
+                    lumiColors.primaryGradientEnd,
+                  ],
                 )
               : null,
-          color: isUser ? null : const Color(0xFFFFE4EC),
+          color: isUser ? null : lumiColors.messageBubbleAI,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(20),
             topRight: const Radius.circular(20),
@@ -531,7 +551,7 @@ class _MessageBubble extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFF85A2).withValues(alpha: 0.1),
+              color: lumiColors.shadowColor.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -543,7 +563,7 @@ class _MessageBubble extends StatelessWidget {
             Text(
               text,
               style: TextStyle(
-                color: isUser ? Colors.white : const Color(0xFF4A4A4A),
+                color: isUser ? Colors.white : lumiColors.textTertiary,
                 fontSize: 15,
                 height: 1.4,
               ),
