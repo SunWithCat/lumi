@@ -360,6 +360,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
           text: msg.content,
           isUser: msg.isUser,
           emotion: msg.emotion,
+          timestamp: msg.timestamp,
         );
       },
     );
@@ -515,11 +516,13 @@ class _MessageBubble extends StatelessWidget {
   final String text;
   final bool isUser;
   final EmotionType? emotion;
+  final DateTime timestamp;
 
   const _MessageBubble({
     required this.text,
     required this.isUser,
     this.emotion,
+    required this.timestamp,
   });
 
   @override
@@ -527,54 +530,69 @@ class _MessageBubble extends StatelessWidget {
     final lumiColors = context.lumiColors;
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        decoration: BoxDecoration(
-          gradient: isUser
-              ? LinearGradient(
-                  colors: [
-                    lumiColors.primaryGradientStart,
-                    lumiColors.primaryGradientEnd,
-                  ],
-                )
-              : null,
-          color: isUser ? null : lumiColors.messageBubbleAI,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(20),
-            topRight: const Radius.circular(20),
-            bottomLeft: Radius.circular(isUser ? 20 : 4),
-            bottomRight: Radius.circular(isUser ? 4 : 20),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: lumiColors.shadowColor.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+      child: Column(
+        crossAxisAlignment: isUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.75,
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              text,
-              style: TextStyle(
-                color: isUser ? Colors.white : lumiColors.textTertiary,
-                fontSize: 15,
-                height: 1.4,
+            decoration: BoxDecoration(
+              gradient: isUser
+                  ? LinearGradient(
+                      colors: [
+                        lumiColors.primaryGradientStart,
+                        lumiColors.primaryGradientEnd,
+                      ],
+                    )
+                  : null,
+              color: isUser ? null : lumiColors.messageBubbleAI,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(20),
+                topRight: const Radius.circular(20),
+                bottomLeft: Radius.circular(isUser ? 20 : 4),
+                bottomRight: Radius.circular(isUser ? 4 : 20),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: lumiColors.shadowColor.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            if (!isUser && emotion != null) ...[
-              const SizedBox(height: 6),
-              Text(emotion!.emoji, style: const TextStyle(fontSize: 14)),
-            ],
-          ],
-        ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  text,
+                  style: TextStyle(
+                    color: isUser ? Colors.white : lumiColors.textTertiary,
+                    fontSize: 15,
+                    height: 1.4,
+                  ),
+                ),
+                if (!isUser && emotion != null) ...[
+                  const SizedBox(height: 6),
+                  Text(emotion!.emoji, style: const TextStyle(fontSize: 14)),
+                ],
+              ],
+            ),
+          ),
+          Text(
+            _formatTime(timestamp),
+            style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+          ),
+        ],
       ),
     );
+  }
+
+  String _formatTime(DateTime time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 }
