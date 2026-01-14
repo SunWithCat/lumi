@@ -253,6 +253,13 @@ void Live2DRenderer::RenderLoop() {
     auto lastTime = std::chrono::steady_clock::now();
     
     while (!_shouldExit.load()) {
+        // 暂停时只睡眠，不渲染（节省 CPU/GPU 资源）
+        if (!_isRunning.load()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            lastTime = std::chrono::steady_clock::now();  // 重置时间，避免恢复时 deltaTime 过大
+            continue;
+        }
+        
         auto currentTime = std::chrono::steady_clock::now();
         float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
         
