@@ -64,12 +64,15 @@ class _Live2DViewState extends State<Live2DView> {
     debugPrint('Tap at ($x, $y)');
     final hitArea = await widget.controller.hitTest(x, y);
     debugPrint('HitTest result: $hitArea');
-    
-    if (hitArea != null && hitArea.isNotEmpty && widget.onHitAreaTapped != null) {
+
+    if (hitArea != null &&
+        hitArea.isNotEmpty &&
+        widget.onHitAreaTapped != null) {
       widget.onHitAreaTapped!(hitArea);
     }
   }
 
+  // 没传 details（约束）
   void _onPanUpdate(DragUpdateDetails details) {
     final renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;

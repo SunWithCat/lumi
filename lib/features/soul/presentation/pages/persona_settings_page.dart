@@ -338,9 +338,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
           ),
           TextButton(
             onPressed: () {
-              ref
-                  .read(currentPersonaProvider.notifier)
-                  .deletePersona(personaId);
+              ref.read(personaProvider.notifier).deletePersona(personaId);
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -364,7 +362,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
     final colorScheme = context.colorScheme;
     final personaId = int.tryParse(persona.id);
     if (personaId != null) {
-      ref.read(currentPersonaProvider.notifier).setPersonaById(personaId);
+      ref.read(personaProvider.notifier).setPersonaById(personaId);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('已切换为 ${persona.name}'),
@@ -570,7 +568,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
 
                       errorNotifier.value = null;
                       ref
-                          .read(currentPersonaProvider.notifier)
+                          .read(personaProvider.notifier)
                           .createCustomPersona(
                             name: name,
                             bio: bio.isNotEmpty ? bio : '一个可爱的AI伙伴',

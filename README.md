@@ -20,8 +20,8 @@
 
 ### 环境要求
 
-- Flutter 3.10+
-- Dart 3.0+
+- Flutter 3.29+
+- Dart 3.8+
 - Android Studio / VS Code
 - Android 设备或模拟器
 
@@ -58,9 +58,6 @@ class ApiConfig {
   static const model = 'deepseek-chat';
 }
 ```
-
-详细配置说明：[API 配置指南](docs/API_SETUP_GUIDE.md)
-
 ---
 
 ## 📁 项目结构
@@ -74,62 +71,27 @@ lumi/
 │       ├── soul/       # AI 对话模块
 │       ├── memory/     # 记忆模块
 │       └── settings/   # 设置模块
-├── android/            # Android 原生代码
-├── docs/               # 文档
-└── assets/             # 资源文件
+└── android/            # Android 原生代码
+
 ```
 
 ---
-
-## 📚 文档
-
-### 项目文档
-
-| 文档 | 说明 |
-|------|------|
-| [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) | 项目进度总览 |
-| [ONBOARDING_GUIDE.md](docs/ONBOARDING_GUIDE.md) | 新手入门指南 |
-| [API_SETUP_GUIDE.md](docs/API_SETUP_GUIDE.md) | API 配置指南 |
-| [FAQ.md](docs/FAQ.md) | 常见问题 |
-
-### 学习文档
-
-| 文档 | 说明 |
-|------|------|
-| [01_Project_Structure.md](docs/learning/01_Project_Structure.md) | 项目结构详解 |
-| [02_Riverpod_State_Management.md](docs/learning/02_Riverpod_State_Management.md) | 状态管理 |
-| [03_Data_Flow_Analysis.md](docs/learning/03_Data_Flow_Analysis.md) | 数据流分析 |
-| [04_Memory_System_Deep_Dive.md](docs/learning/04_Memory_System_Deep_Dive.md) | 记忆系统详解 |
-| [05_Live2D_Integration.md](docs/learning/05_Live2D_Integration.md) | Live2D 集成 |
-| [06_Practice_Tasks.md](docs/learning/06_Practice_Tasks.md) | 实践任务 |
-
-### 模块文档
-
-| 文档 | 说明 |
-|------|------|
-| [M4_Memory_System_Overview.md](docs/M4_Memory_System_Overview.md) | 记忆系统总览 |
-| [M4_Context_Manager.md](docs/M4_Context_Manager.md) | 上下文管理器 |
-| [M4_Memory_Evaluator.md](docs/M4_Memory_Evaluator.md) | 记忆评估器 |
-| [M4_Memory_Compactor.md](docs/M4_Memory_Compactor.md) | 记忆压缩器 |
-
----
-
 ## 🎯 开发进度
 
-| 里程碑 | 状态 | 说明 |
-|--------|------|------|
-| M1 Live2D 渲染 | ✅ 完成 | Texture 方案，60fps |
-| M2 LLM + 情感 | ✅ 完成 | DeepSeek/OpenAI 兼容 |
-| M3 情感同步 | ✅ 完成 | 9 种情绪映射 |
-| M4 记忆系统 | ✅ 完成 | RAG + 压缩去重 |
-| M5 TTS 语音 | 🚧 规划中 | - |
-| M6 iOS 适配 | 🚧 规划中 | - |
+| 里程碑         | 状态     | 说明                 |
+| -------------- | -------- | -------------------- |
+| M1 Live2D 渲染 | ✅ 完成   | Texture 方案，60fps  |
+| M2 LLM + 情感  | ✅ 完成   | DeepSeek/OpenAI 兼容 |
+| M3 情感同步    | ✅ 完成   | 9 种情绪映射         |
+| M4 记忆系统    | ✅ 完成   | RAG + 压缩去重       |
+| M5 TTS 语音    | 🚧 规划中 | -                    |
+| M6 iOS 适配    | 🚧 规划中 | -                    |
 
 ---
 
 ## 🛠️ 技术栈
 
-- **框架:** Flutter 3.x
+- **框架:** Flutter 3.29+
 - **状态管理:** Riverpod
 - **数据库:** Drift (SQLite)
 - **网络:** Dio

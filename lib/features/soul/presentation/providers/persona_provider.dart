@@ -9,30 +9,43 @@ final personaRepositoryProvider = Provider<PersonaRepository>((ref) {
   return PersonaRepository(db);
 });
 
-/// 所有人格列表 Provider
-final allPersonasProvider = FutureProvider<List<PersonaConfig>>((ref) async {
-  final repo = ref.watch(personaRepositoryProvider);
-  return repo.getAllPersonas();
+class PersonaState {
+  final PersonaConfig current;
+  final List<PersonaConfig> all;
+
+  const PersonaState({required this.current, required this.all});
+
+  PersonaState copyWith({PersonaConfig? current, List<PersonaConfig>? all}) {
+    return PersonaState(current: current ?? this.current, all: all ?? this.all);
+  }
+}
+
+final personaProvider =
+    StateNotifierProvider<PersonaNotifier, AsyncValue<PersonaState>>((ref) {
+      final repo = ref.watch(personaRepositoryProvider);
+      return PersonaNotifier(repo);
+    });
+
+final currentPersonaProvider = Provider<AsyncValue<PersonaConfig>>((ref) {
+  return ref.watch(personaProvider).whenData((state) => state.current);
 });
 
-/// 当前人格配置 Provider
-final currentPersonaProvider = StateNotifierProvider<PersonaNotifier, AsyncValue<PersonaConfig>>((ref) {
-  final repo = ref.watch(personaRepositoryProvider);
-  return PersonaNotifier(repo, ref);
+final allPersonasProvider = Provider<AsyncValue<List<PersonaConfig>>>((ref) {
+  return ref.watch(personaProvider).whenData((state) => state.all);
 });
 
-class PersonaNotifier extends StateNotifier<AsyncValue<PersonaConfig>> {
+class PersonaNotifier extends StateNotifier<AsyncValue<PersonaState>> {
   final PersonaRepository _repo;
-  final Ref _ref;
 
-  PersonaNotifier(this._repo, this._ref) : super(const AsyncValue.loading()) {
-    _loadCurrentPersona();
+  PersonaNotifier(this._repo) : super(const AsyncValue.loading()) {
+    _loadAll();
   }
 
-  Future<void> _loadCurrentPersona() async {
+  Future<void> _loadAll() async {
     try {
-      final persona = await _repo.getCurrentPersona();
-      state = AsyncValue.data(persona);
+      final current = await _repo.getCurrentPersona();
+      final all = await _repo.getAllPersonas();
+      state = AsyncValue.data(PersonaState(current: current, all: all));
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -42,9 +55,7 @@ class PersonaNotifier extends StateNotifier<AsyncValue<PersonaConfig>> {
   Future<void> setPersonaById(int personaId) async {
     try {
       await _repo.setActivePersona(personaId);
-      await _loadCurrentPersona();
-      // 刷新人格列表
-      _ref.invalidate(allPersonasProvider);
+      await _loadAll();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -69,12 +80,13 @@ class PersonaNotifier extends StateNotifier<AsyncValue<PersonaConfig>> {
   /// 添加新人格
   Future<int> addPersona(PersonaConfig config) async {
     final id = await _repo.addPersona(config);
-    _ref.invalidate(allPersonasProvider);
+    await _loadAll();
     return id;
   }
 
   /// 更新人格（通过 ID）
-  Future<void> updatePersonaById(int id, {
+  Future<void> updatePersonaById(
+    int id, {
     String? name,
     String? description,
     String? systemPrompt,
@@ -85,8 +97,7 @@ class PersonaNotifier extends StateNotifier<AsyncValue<PersonaConfig>> {
       description: description,
       systemPrompt: systemPrompt,
     );
-    await _loadCurrentPersona();
-    _ref.invalidate(allPersonasProvider);
+    await _loadAll();
   }
 
   /// 创建自定义人格（基于当前人格，但创建新的而不是修改原有）
@@ -95,12 +106,12 @@ class PersonaNotifier extends StateNotifier<AsyncValue<PersonaConfig>> {
     required String bio,
     required String userTitle,
   }) async {
-    final current = state.valueOrNull;
+    final current = state.valueOrNull?.current;
     if (current == null) return;
-    
+
     // 创建新的人格配置，不带 customSystemPrompt，强制根据属性生成
     final newPersona = PersonaConfig(
-      id: '',  // 新人格，ID 由数据库生成
+      id: '', // 新人格，ID 由数据库生成
       name: name,
       age: current.age,
       bio: bio,
@@ -109,26 +120,26 @@ class PersonaNotifier extends StateNotifier<AsyncValue<PersonaConfig>> {
       userTitle: userTitle,
       baselineEmotion: current.baselineEmotion,
       emotionalSensitivity: current.emotionalSensitivity,
-      customSystemPrompt: null,  // 清空，强制使用属性生成
+      customSystemPrompt: null, // 清空，强制使用属性生成
       isActive: false,
     );
-    
+
     // 添加新人格到数据库
     final newId = await _repo.addPersona(newPersona);
-    
+
     // 激活新人格
     await setPersonaById(newId);
   }
-  
+
   /// 更新已有人格（用于编辑自定义人格，不是预设）
   Future<void> updatePersona({
     String? name,
     String? bio,
     String? userTitle,
   }) async {
-    final current = state.valueOrNull;
+    final current = state.valueOrNull?.current;
     if (current == null) return;
-    
+
     final personaId = int.tryParse(current.id);
     if (personaId != null) {
       // 创建一个没有 customSystemPrompt 的副本，强制重新生成 systemPrompt
@@ -142,29 +153,28 @@ class PersonaNotifier extends StateNotifier<AsyncValue<PersonaConfig>> {
         userTitle: userTitle ?? current.userTitle,
         baselineEmotion: current.baselineEmotion,
         emotionalSensitivity: current.emotionalSensitivity,
-        customSystemPrompt: null,  // 清空，强制使用属性生成
+        customSystemPrompt: null, // 清空，强制使用属性生成
         isActive: current.isActive,
       );
-      
+
       await _repo.updatePersona(
         personaId,
         name: name,
         description: bio,
-        systemPrompt: updated.systemPrompt,  // 现在会根据新属性生成
+        systemPrompt: updated.systemPrompt, // 现在会根据新属性生成
       );
-      await _loadCurrentPersona();
-      _ref.invalidate(allPersonasProvider);
+      await _loadAll();
     }
   }
 
   /// 删除人格
   Future<void> deletePersona(int id) async {
     await _repo.deletePersona(id);
-    _ref.invalidate(allPersonasProvider);
+    await _loadAll();
   }
 
   /// 刷新
   Future<void> refresh() async {
-    await _loadCurrentPersona();
+    await _loadAll();
   }
 }

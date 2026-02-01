@@ -38,7 +38,8 @@ class PersonaRepository {
   }
 
   /// 更新人格
-  Future<void> updatePersona(int id, {
+  Future<void> updatePersona(
+    int id, {
     String? name,
     String? description,
     String? systemPrompt,
@@ -61,7 +62,7 @@ class PersonaRepository {
     return PersonaConfig(
       id: persona.id.toString(),
       name: persona.name,
-      age: '外表18岁', // 数据库暂不存储
+      age: '18岁', // 数据库暂不存储
       bio: persona.description,
       traits: _extractTraits(persona.systemPrompt),
       speakingStyle: _extractSpeakingStyle(persona.systemPrompt),
@@ -76,7 +77,8 @@ class PersonaRepository {
     final regex = RegExp(r'## 核心人格\n((?:- .+\n?)+)');
     final match = regex.firstMatch(prompt);
     if (match != null) {
-      return match.group(1)!
+      return match
+          .group(1)!
           .split('\n')
           .where((line) => line.startsWith('- '))
           .map((line) => line.substring(2).trim())

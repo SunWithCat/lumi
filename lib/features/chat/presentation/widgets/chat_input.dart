@@ -12,7 +12,7 @@ class ChatInput extends StatefulWidget {
 
 class _ChatInputState extends State<ChatInput> {
   final _controller = TextEditingController();
-  final _focusNode = FocusNode();
+  final _focusNode = FocusNode(); // 先留着
 
   // static const _primaryPink = Color(0xFFFF85A2);
   // static const _lightPink = Color(0xFFFFE4EC);
