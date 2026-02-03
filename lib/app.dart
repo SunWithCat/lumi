@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:lumi/core/theme/app_theme.dart';
 import 'package:lumi/core/theme/theme_provider.dart';
@@ -18,6 +19,14 @@ class LumiApp extends ConsumerWidget {
       theme: theme,
       home: const LumiHomePage(),
       debugShowCheckedModeBanner: false,
+      // 中文本地化
+      locale: const Locale('zh', 'CN'),
+      supportedLocales: const [Locale('zh', 'CN'), Locale('en', 'US')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       // 注册路由观察者，用于监听页面切换
       navigatorObservers: [LumiHomePage.routeObserver],
     );

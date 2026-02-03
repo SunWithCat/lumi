@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import 'package:lumi/core/config/api_config.dart';
 import 'package:lumi/core/config/app_settings.dart';
 import 'package:lumi/core/utils/logger.dart';
 import 'package:lumi/features/memory/data/memory_repository.dart';
@@ -58,16 +57,16 @@ class ChatNotifier extends StateNotifier<ChatState> {
     MemoryRepository? memoryRepo,
     PersonaConfig persona = PersonaConfig.defaultPersona,
     LLMSettings llmSettings = const LLMSettings(),
-  })  : _llmClient = llmClient,
-        _memoryRepo = memoryRepo,
-        _persona = persona,
-        _llmSettings = llmSettings,
-        super(const ChatState());
+  }) : _llmClient = llmClient,
+       _memoryRepo = memoryRepo,
+       _persona = persona,
+       _llmSettings = llmSettings,
+       super(const ChatState());
 
   /// 初始化：加载历史对话
   Future<void> loadHistory() async {
     if (_memoryRepo == null) return;
-    
+
     final history = await _memoryRepo.getConversationHistory(limit: 50);
     if (history.isNotEmpty) {
       state = state.copyWith(messages: history);
@@ -103,17 +102,25 @@ class ChatNotifier extends StateNotifier<ChatState> {
         // 获取相关记忆 (RAG)
         List<String> relevantMemories = [];
         if (_memoryRepo != null) {
-          relevantMemories = await _memoryRepo.searchRelevantMemories(content, limit: 5);
+          relevantMemories = await _memoryRepo.searchRelevantMemories(
+            content,
+            limit: 5,
+          );
         }
 
         // 使用上下文管理器构建上下文
         final context = _contextManager.buildContext(
-          allMessages: state.messages.sublist(0, state.messages.length - 1), // 排除刚添加的用户消息
+          allMessages: state.messages.sublist(
+            0,
+            state.messages.length - 1,
+          ), // 排除刚添加的用户消息
           currentInput: content,
           memories: relevantMemories,
         );
 
-        AppLogger.d('Context: ${context.includedMessageCount}/${context.totalMessageCount} messages, hasMemories: ${context.hasMemories}');
+        AppLogger.d(
+          'Context: ${context.includedMessageCount}/${context.totalMessageCount} messages, hasMemories: ${context.hasMemories}',
+        );
 
         // 构建增强的系统提示
         final enhancedPrompt = context.hasMemories
@@ -139,7 +146,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
           ('嗯嗯，我在听呢~ 继续说吧！', EmotionType.curious),
           ('主人说的好有趣哦！', EmotionType.happy),
         ];
-        final mock = mockResponses[state.messages.length % mockResponses.length];
+        final mock =
+            mockResponses[state.messages.length % mockResponses.length];
         responseText = mock.$1;
         emotion = mock.$2;
       }
@@ -164,29 +172,33 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
       // 提取并保存重要记忆
       await _extractAndSaveMemory(content, responseText);
-
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   /// 提取重要信息保存为记忆
-  Future<void> _extractAndSaveMemory(String userInput, String aiResponse) async {
+  Future<void> _extractAndSaveMemory(
+    String userInput,
+    String aiResponse,
+  ) async {
     if (_memoryRepo == null) return;
 
     // 使用记忆评估器判断是否值得记忆
-    final evaluation = _memoryEvaluator.evaluate(userInput, aiResponse: aiResponse);
-    
+    final evaluation = _memoryEvaluator.evaluate(
+      userInput,
+      aiResponse: aiResponse,
+    );
+
     if (evaluation.shouldRemember) {
       // 使用带去重的保存方法
       await _memoryRepo.saveMemoryWithDedup(
         '用户说: ${evaluation.suggestedContent}',
         importance: evaluation.score,
       );
-      AppLogger.d('Memory evaluation (score: ${evaluation.score.toStringAsFixed(2)}): ${evaluation.suggestedContent}');
+      AppLogger.d(
+        'Memory evaluation (score: ${evaluation.score.toStringAsFixed(2)}): ${evaluation.suggestedContent}',
+      );
       AppLogger.d('Reasons: ${evaluation.reasons.join(', ')}');
     }
   }
@@ -209,16 +221,17 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   final memoryRepo = ref.watch(memoryRepositoryProvider);
   final personaAsync = ref.watch(currentPersonaProvider);
   final appSettings = ref.watch(appSettingsProvider);
-  
+
   // 从 AsyncValue 中获取人格配置，如果还在加载则使用默认
   final persona = personaAsync.valueOrNull ?? PersonaConfig.sakura;
-  
+
   LLMClient? llmClient;
-  if (ApiConfig.isConfigured) {
+  final apiSettings = appSettings.apiSettings;
+  if (apiSettings.isConfigured) {
     llmClient = LLMClient(
-      baseUrl: ApiConfig.baseUrl,
-      apiKey: ApiConfig.apiKey,
-      model: ApiConfig.model,
+      baseUrl: apiSettings.baseUrl,
+      apiKey: apiSettings.apiKey,
+      model: apiSettings.model,
     );
   }
 

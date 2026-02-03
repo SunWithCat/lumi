@@ -4,6 +4,7 @@ import 'package:lumi/core/config/app_settings.dart';
 import 'package:lumi/core/theme/app_theme.dart';
 import 'package:lumi/core/theme/theme_provider.dart';
 import 'package:lumi/features/memory/presentation/pages/memory_management_page.dart';
+import 'package:lumi/features/settings/presentation/pages/api_settings_page.dart';
 import 'package:lumi/features/settings/presentation/pages/llm_settings_page.dart';
 import 'package:lumi/features/soul/presentation/pages/persona_settings_page.dart';
 
@@ -53,6 +54,19 @@ class SettingsPage extends ConsumerWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const LLMSettingsPage()),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildSettingCard(
+            context: context,
+            icon: Icons.api_rounded,
+            title: 'API 设置',
+            subtitle: settings.apiSettings.isConfigured
+                ? '已配置 (${settings.apiSettings.model})'
+                : '配置 OpenAI 兼容接口',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ApiSettingsPage()),
             ),
           ),
           const SizedBox(height: 24),
