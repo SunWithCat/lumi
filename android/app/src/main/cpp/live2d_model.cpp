@@ -514,7 +514,7 @@ void Live2DModel::StartRandomIdleMotion() {
 }
 
 void Live2DModel::SetExpression(const std::string& expressionId) {
-    ACubismMotion* motion = _expressions[expressionId.c_str()];
+    ACubismMotion* motion = _expressions[expressionId.c_str()]; // 未预加载表情缓存，为空
     
     if (motion) {
         _expressionManager->StartMotionPriority(motion, false, 3);

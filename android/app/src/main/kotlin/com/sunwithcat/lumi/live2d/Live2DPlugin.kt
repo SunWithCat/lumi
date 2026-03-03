@@ -180,6 +180,7 @@ class Live2DPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, EventChanne
         }
     }
 
+    // 模型的动作已经自带表情，这个方法暂时没用
     private fun handleSetExpression(call: MethodCall, result: MethodChannel.Result) {
         val expressionId = call.argument<String>("expressionId") ?: return
 

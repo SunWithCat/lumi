@@ -25,6 +25,7 @@ class LumiHomePage extends ConsumerStatefulWidget {
 class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   late Live2DController _live2dController;
   bool _live2dInitialized = false;
+  int? _lastResolution;
   final ScrollController _scrollController = ScrollController();
 
   // 主题色
@@ -57,15 +58,41 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   // 当前页面被其他页面覆盖时调用（进入设置页）
   @override
   void didPushNext() {
-    debugPrint('LumiHomePage: didPushNext - pausing Live2D');
+    debugPrint('LumiHomePage: didPushNext - 暂停 Live2D');
     _live2dController.pause();
   }
 
   // 从其他页面返回到当前页面时调用（从设置页返回）
   @override
   void didPopNext() {
-    debugPrint('LumiHomePage: didPopNext - resuming Live2D');
-    _live2dController.resume();
+    debugPrint('LumiHomePage: didPopNext - 检查分辨率是否改变');
+    final currentResolution = ref
+        .read(appSettingsProvider)
+        .renderQuality
+        .resolution;
+
+    if (_lastResolution != null && _lastResolution != currentResolution) {
+      // 分辨率变了，需要重建渲染管线
+      debugPrint('分辨率改变了: $_lastResolution → $currentResolution');
+      _reinitWithNewResolution(currentResolution);
+    } else {
+      _live2dController.resume();
+    }
+  }
+
+  /// 用新分辨率重建 Live2D
+  Future<void> _reinitWithNewResolution(int resolution) async {
+    setState(() => _live2dInitialized = false);
+
+    final success = await _live2dController.reinitialize(
+      width: resolution,
+      height: resolution,
+    );
+
+    if (success) {
+      _lastResolution = resolution;
+      setState(() => _live2dInitialized = true);
+    }
   }
 
   Future<void> _initLive2D() async {
@@ -81,6 +108,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
       await _live2dController.loadModel(
         'hiyori_pro_zh/runtime/hiyori_pro_t11.model3.json',
       );
+      _lastResolution = resolution;
       setState(() => _live2dInitialized = true);
     }
   }

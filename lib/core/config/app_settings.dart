@@ -4,9 +4,9 @@ import 'package:lumi/features/memory/presentation/providers/memory_provider.dart
 
 /// 画质等级
 enum RenderQuality {
-  low(512, '省电模式', '512x512'),
-  medium(1024, '平衡模式', '1024x1024'),
-  high(2048, '高清模式', '2048x2048');
+  low(512, '省电模式', '512x512 · 流畅省电'),
+  medium(1024, '平衡模式', '1024x1024 · 推荐使用'),
+  high(2048, '高清模式', '2048x2048 · 极致细腻');
 
   final int resolution;
   final String label;

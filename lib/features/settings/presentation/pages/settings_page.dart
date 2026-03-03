@@ -292,7 +292,7 @@ class SettingsPage extends ConsumerWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              '更改画质后需要重启应用才能生效',
+              '高画质更清晰但更耗电，返回后自动生效',
               style: TextStyle(fontSize: 13, color: Colors.grey[600]),
             ),
           ),
@@ -354,7 +354,7 @@ class SettingsPage extends ConsumerWidget {
     ref.read(appSettingsProvider.notifier).setRenderQuality(quality);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('已切换为${quality.label}，重启后生效'),
+        content: Text('分辨率已切换为${quality.label}'),
         backgroundColor: colorScheme.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

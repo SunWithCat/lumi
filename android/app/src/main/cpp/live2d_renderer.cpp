@@ -82,7 +82,7 @@ bool Live2DRenderer::Initialize(JNIEnv* env, jobject assetManager, jobject surfa
     }
     
     // 从 SurfaceTexture 获取 ANativeWindow
-    jclass surfaceTextureClass = env->GetObjectClass(surfaceTexture);
+    // jclass surfaceTextureClass = env->GetObjectClass(surfaceTexture);
     jclass surfaceClass = env->FindClass("android/view/Surface");
     jmethodID surfaceConstructor = env->GetMethodID(surfaceClass, "<init>", "(Landroid/graphics/SurfaceTexture;)V");
     jobject surface = env->NewObject(surfaceClass, surfaceConstructor, surfaceTexture);
@@ -97,7 +97,7 @@ bool Live2DRenderer::Initialize(JNIEnv* env, jobject assetManager, jobject surfa
     
     env->DeleteLocalRef(surface);
     env->DeleteLocalRef(surfaceClass);
-    env->DeleteLocalRef(surfaceTextureClass);
+    // env->DeleteLocalRef(surfaceTextureClass);
     
     // 启动渲染线程（Cubism Framework 将在渲染线程中初始化）
     _shouldExit.store(false);

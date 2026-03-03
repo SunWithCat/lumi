@@ -6,11 +6,14 @@ import 'package:lumi/core/utils/logger.dart';
 /// Live2D 控制器
 class Live2DController extends ChangeNotifier {
   static const _channel = MethodChannel('com.sunwithcat.lumi/live2d');
-  static const _eventChannel = EventChannel('com.sunwithcat.lumi/live2d/events');
+  static const _eventChannel = EventChannel(
+    'com.sunwithcat.lumi/live2d/events',
+  );
 
   int? _textureId;
   bool _isInitialized = false;
   bool _isModelLoaded = false;
+  String? _currentModelPath;
   StreamSubscription? _eventSubscription;
 
   final _motionFinishedController = StreamController<MotionEvent>.broadcast();
@@ -53,6 +56,7 @@ class Live2DController extends ChangeNotifier {
         'path': assetPath,
       });
       _isModelLoaded = success == true;
+      if (_isModelLoaded) _currentModelPath = assetPath;
       AppLogger.i('Live2D model loaded: $_isModelLoaded');
       notifyListeners();
       return _isModelLoaded;
@@ -62,9 +66,43 @@ class Live2DController extends ChangeNotifier {
     }
   }
 
+  /// 重新初始化渲染器（切换分辨率时使用）
+  Future<bool> reinitialize({required int width, required int height}) async {
+    AppLogger.i('Live2D 重新初始化: ${width}x$height');
+
+    try {
+      await _channel.invokeMethod('destroy');
+    } on PlatformException catch (e) {
+      AppLogger.e('销毁失败', e);
+    }
+
+    _isInitialized = false;
+    _isModelLoaded = false;
+    _textureId = null;
+
+    final success = await initialize(width: width, height: height);
+    if (!success) {
+      AppLogger.e('重新初始化失败');
+      return false;
+    }
+
+    if (_currentModelPath != null) {
+      await loadModel(_currentModelPath!);
+    }
+
+    AppLogger.i('Live2D 重新初始化成功');
+    return true;
+  }
+
   /// 播放动作
-  Future<void> playMotion(String group, {int index = 0, int priority = 2}) async {
-    AppLogger.i('playMotion called: $group[$index] priority=$priority, isModelLoaded=$_isModelLoaded');
+  Future<void> playMotion(
+    String group, {
+    int index = 0,
+    int priority = 2,
+  }) async {
+    AppLogger.i(
+      'playMotion called: $group[$index] priority=$priority, isModelLoaded=$_isModelLoaded',
+    );
     if (!_isModelLoaded) {
       AppLogger.w('playMotion: model not loaded, skipping');
       return;
@@ -147,20 +185,19 @@ class Live2DController extends ChangeNotifier {
   }
 
   void _subscribeEvents() {
-    _eventSubscription = _eventChannel.receiveBroadcastStream().listen(
-      (event) {
-        if (event is Map) {
-          final type = event['type'] as String?;
-          if (type == 'motionFinished') {
-            _motionFinishedController.add(MotionEvent(
+    _eventSubscription = _eventChannel.receiveBroadcastStream().listen((event) {
+      if (event is Map) {
+        final type = event['type'] as String?;
+        if (type == 'motionFinished') {
+          _motionFinishedController.add(
+            MotionEvent(
               group: event['group'] as String,
               index: event['index'] as int,
-            ));
-          }
+            ),
+          );
         }
-      },
-      onError: (e) => AppLogger.e('Event stream error', e),
-    );
+      }
+    }, onError: (e) => AppLogger.e('Event stream error', e));
   }
 
   @override
