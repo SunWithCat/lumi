@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/theme/app_theme.dart';
 import 'package:lumi/features/memory/domain/memory_compactor.dart';
 import 'package:lumi/features/memory/presentation/providers/memory_provider.dart';
+import 'package:toastification/toastification.dart';
 
 /// 记忆管理页面
 ///
@@ -140,13 +141,20 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: context.colorScheme.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    toastification.dismissAll();
+    toastification.show(
+      context: context,
+      title: Text(message),
+      type: ToastificationType.success,
+      style: ToastificationStyle.flat,
+      primaryColor: context.colorScheme.primary,
+      icon: Icon(
+        Icons.check_circle_rounded,
+        color: context.colorScheme.primary,
       ),
+      autoCloseDuration: const Duration(seconds: 2),
+      alignment: Alignment.bottomCenter,
+      showProgressBar: false,
     );
   }
 

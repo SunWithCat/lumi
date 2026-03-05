@@ -73,40 +73,44 @@ class AppDatabase extends _$AppDatabase {
   /// 预填充默认人格配置
   Future<void> _seedDefaultPersonas() async {
     // 傲娇 Hiyori
-    await into(personas).insert(PersonasCompanion.insert(
-      name: '绯依',
-      description: '傲娇的AI少女，嘴上说着讨厌但其实很在意你',
-      systemPrompt: _tsunderePrompt,
-      isActive: const Value(true),
-      createdAt: DateTime.now(),
-    ));
+    await into(personas).insert(
+      PersonasCompanion.insert(
+        name: '绯依',
+        description: '傲娇的AI少女，嘴上说着讨厌但其实很在意你',
+        systemPrompt: _tsunderePrompt,
+        isActive: const Value(true),
+        createdAt: DateTime.now(),
+      ),
+    );
 
     // 温柔樱
-    await into(personas).insert(PersonasCompanion.insert(
-      name: '樱',
-      description: '温柔体贴的AI少女，对世界充满好奇',
-      systemPrompt: _gentlePrompt,
-      isActive: const Value(false),
-      createdAt: DateTime.now(),
-    ));
+    await into(personas).insert(
+      PersonasCompanion.insert(
+        name: '樱',
+        description: '温柔体贴的AI少女，对世界充满好奇',
+        systemPrompt: _gentlePrompt,
+        isActive: const Value(false),
+        createdAt: DateTime.now(),
+      ),
+    );
 
     // 元气阳菜
-    await into(personas).insert(PersonasCompanion.insert(
-      name: '阳菜',
-      description: '活力满满的元气少女，永远保持积极乐观',
-      systemPrompt: _genkiPrompt,
-      isActive: const Value(false),
-      createdAt: DateTime.now(),
-    ));
+    await into(personas).insert(
+      PersonasCompanion.insert(
+        name: '阳菜',
+        description: '活力满满的元气少女，永远保持积极乐观',
+        systemPrompt: _genkiPrompt,
+        isActive: const Value(false),
+        createdAt: DateTime.now(),
+      ),
+    );
   }
-
-  // ═══════════════════════════════════════════════════════════════════
-  //                      人格操作
-  // ═══════════════════════════════════════════════════════════════════
 
   /// 获取当前激活的人格
   Future<Persona?> getActivePersona() {
-    return (select(personas)..where((t) => t.isActive.equals(true))).getSingleOrNull();
+    return (select(
+      personas,
+    )..where((t) => t.isActive.equals(true))).getSingleOrNull();
   }
 
   /// 获取所有人格
@@ -117,10 +121,13 @@ class AppDatabase extends _$AppDatabase {
   /// 设置激活的人格
   Future<void> setActivePersona(int personaId) async {
     // 先将所有人格设为非激活
-    await (update(personas)).write(const PersonasCompanion(isActive: Value(false)));
+    await (update(
+      personas,
+    )).write(const PersonasCompanion(isActive: Value(false)));
     // 再激活指定人格
-    await (update(personas)..where((t) => t.id.equals(personaId)))
-        .write(const PersonasCompanion(isActive: Value(true)));
+    await (update(personas)..where((t) => t.id.equals(personaId))).write(
+      const PersonasCompanion(isActive: Value(true)),
+    );
   }
 
   /// 添加新人格
@@ -129,17 +136,20 @@ class AppDatabase extends _$AppDatabase {
     required String description,
     required String systemPrompt,
   }) {
-    return into(personas).insert(PersonasCompanion.insert(
-      name: name,
-      description: description,
-      systemPrompt: systemPrompt,
-      isActive: const Value(false),
-      createdAt: DateTime.now(),
-    ));
+    return into(personas).insert(
+      PersonasCompanion.insert(
+        name: name,
+        description: description,
+        systemPrompt: systemPrompt,
+        isActive: const Value(false),
+        createdAt: DateTime.now(),
+      ),
+    );
   }
 
   /// 更新人格
-  Future<void> updatePersona(int id, {
+  Future<void> updatePersona(
+    int id, {
     String? name,
     String? description,
     String? systemPrompt,
@@ -147,8 +157,12 @@ class AppDatabase extends _$AppDatabase {
     return (update(personas)..where((t) => t.id.equals(id))).write(
       PersonasCompanion(
         name: name != null ? Value(name) : const Value.absent(),
-        description: description != null ? Value(description) : const Value.absent(),
-        systemPrompt: systemPrompt != null ? Value(systemPrompt) : const Value.absent(),
+        description: description != null
+            ? Value(description)
+            : const Value.absent(),
+        systemPrompt: systemPrompt != null
+            ? Value(systemPrompt)
+            : const Value.absent(),
       ),
     );
   }
@@ -158,10 +172,6 @@ class AppDatabase extends _$AppDatabase {
     return (delete(personas)..where((t) => t.id.equals(id))).go();
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  //                      对话操作
-  // ═══════════════════════════════════════════════════════════════════
-
   /// 保存对话消息
   Future<int> saveConversation({
     required String messageId,
@@ -169,13 +179,15 @@ class AppDatabase extends _$AppDatabase {
     required bool isUser,
     String? emotion,
   }) {
-    return into(conversations).insert(ConversationsCompanion.insert(
-      messageId: messageId,
-      content: content,
-      isUser: isUser,
-      emotion: Value(emotion),
-      timestamp: DateTime.now(),
-    ));
+    return into(conversations).insert(
+      ConversationsCompanion.insert(
+        messageId: messageId,
+        content: content,
+        isUser: isUser,
+        emotion: Value(emotion),
+        timestamp: DateTime.now(),
+      ),
+    );
   }
 
   /// 获取最近的对话历史
@@ -191,20 +203,15 @@ class AppDatabase extends _$AppDatabase {
     return delete(conversations).go();
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  //                      记忆操作
-  // ═══════════════════════════════════════════════════════════════════
-
   /// 保存记忆
-  Future<int> saveMemory({
-    required String content,
-    double importance = 0.5,
-  }) {
-    return into(memories).insert(MemoriesCompanion.insert(
-      content: content,
-      importance: Value(importance),
-      createdAt: DateTime.now(),
-    ));
+  Future<int> saveMemory({required String content, double importance = 0.5}) {
+    return into(memories).insert(
+      MemoriesCompanion.insert(
+        content: content,
+        importance: Value(importance),
+        createdAt: DateTime.now(),
+      ),
+    );
   }
 
   /// 搜索相关记忆 (简单关键词匹配)
@@ -226,7 +233,9 @@ class AppDatabase extends _$AppDatabase {
 
   /// 更新记忆访问时间
   Future<void> touchMemory(int id) async {
-    final memory = await (select(memories)..where((t) => t.id.equals(id))).getSingleOrNull();
+    final memory = await (select(
+      memories,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
     if (memory != null) {
       await (update(memories)..where((t) => t.id.equals(id))).write(
         MemoriesCompanion(
@@ -240,9 +249,7 @@ class AppDatabase extends _$AppDatabase {
   /// 更新记忆重要性
   Future<void> updateMemoryImportance(int id, double importance) async {
     await (update(memories)..where((t) => t.id.equals(id))).write(
-      MemoriesCompanion(
-        importance: Value(importance),
-      ),
+      MemoriesCompanion(importance: Value(importance)),
     );
   }
 
@@ -262,7 +269,9 @@ class AppDatabase extends _$AppDatabase {
 
   /// 获取设置值
   Future<String?> getSetting(String key) async {
-    final result = await (select(appSettings)..where((t) => t.key.equals(key))).getSingleOrNull();
+    final result = await (select(
+      appSettings,
+    )..where((t) => t.key.equals(key))).getSingleOrNull();
     return result?.value;
   }
 

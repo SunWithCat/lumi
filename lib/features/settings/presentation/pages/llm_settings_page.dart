@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/config/app_settings.dart';
 import 'package:lumi/core/theme/app_theme.dart';
+import 'package:toastification/toastification.dart';
 
 class LLMSettingsPage extends ConsumerStatefulWidget {
   const LLMSettingsPage({super.key});
@@ -40,7 +41,7 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
             description: '控制回复的最大长度，越大回复越详细',
             value: llm.maxTokens.toDouble(),
             min: 100,
-            max: 2000,
+            max: 4096,
             divisions: 19,
             onChanged: (v) => ref
                 .read(appSettingsProvider.notifier)
@@ -250,16 +251,17 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
         notifier.updateLLMSettings(
           LLMSettings(maxTokens: maxTokens, temperature: temp, topP: topP),
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('已应用「$label」预设'),
-            backgroundColor: colorScheme.primary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            duration: const Duration(seconds: 1),
-          ),
+        toastification.dismissAll();
+        toastification.show(
+          context: context,
+          title: Text('已应用「$label」预设'),
+          type: ToastificationType.success,
+          style: ToastificationStyle.flat,
+          primaryColor: colorScheme.primary,
+          icon: Icon(Icons.check_circle_rounded, color: colorScheme.primary),
+          autoCloseDuration: const Duration(seconds: 2),
+          alignment: Alignment.bottomCenter,
+          showProgressBar: false,
         );
       },
       child: Container(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/config/app_settings.dart';
 import 'package:lumi/core/theme/app_theme.dart';
+import 'package:toastification/toastification.dart';
 
 class ApiSettingsPage extends ConsumerStatefulWidget {
   const ApiSettingsPage({super.key});
@@ -178,30 +179,35 @@ class _ApiSettingsPageState extends ConsumerState<ApiSettingsPage> {
     if (baseUrl.isNotEmpty &&
         !baseUrl.startsWith('http://') &&
         !baseUrl.startsWith('https://')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('URL 格式错误，需要以 http:// 或 https:// 开头'),
-          backgroundColor: Colors.red[400],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      toastification.dismissAll();
+      toastification.show(
+        context: context,
+        title: const Text('URL 格式错误，需要以 http:// 或 https:// 开头'),
+        type: ToastificationType.error,
+        style: ToastificationStyle.flat,
+        primaryColor: Colors.red[400],
+        icon: Icon(Icons.error_outline, color: Colors.red[400]),
+        autoCloseDuration: const Duration(seconds: 2),
+        alignment: Alignment.bottomCenter,
+        showProgressBar: false,
       );
+
       return;
     }
 
     // 校验 Model 不为空（如果 API Key 不为空的话）
     if (_apiKeyController.text.trim().isNotEmpty && model.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('请输入模型 ID'),
-          backgroundColor: Colors.red[400],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      toastification.dismissAll();
+      toastification.show(
+        context: context,
+        title: const Text('请输入模型 ID'),
+        type: ToastificationType.error,
+        style: ToastificationStyle.flat,
+        primaryColor: Colors.red[400],
+        icon: Icon(Icons.error_outline, color: Colors.red[400]),
+        autoCloseDuration: const Duration(seconds: 2),
+        alignment: Alignment.bottomCenter,
+        showProgressBar: false,
       );
       return;
     }
@@ -216,13 +222,17 @@ class _ApiSettingsPageState extends ConsumerState<ApiSettingsPage> {
     // 取消焦点
     FocusScope.of(context).unfocus();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('设置已保存'),
-        backgroundColor: colorScheme.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+    toastification.dismissAll();
+    toastification.show(
+      context: context,
+      title: const Text('设置已保存'),
+      type: ToastificationType.success,
+      style: ToastificationStyle.flat,
+      primaryColor: colorScheme.primary,
+      icon: Icon(Icons.check_circle_rounded, color: colorScheme.primary),
+      autoCloseDuration: const Duration(seconds: 2),
+      alignment: Alignment.bottomCenter,
+      showProgressBar: false,
     );
 
     // 返回上一页

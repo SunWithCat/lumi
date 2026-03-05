@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/theme/app_theme.dart';
 import 'package:lumi/features/soul/domain/entities/persona_config.dart';
 import 'package:lumi/features/soul/presentation/providers/persona_provider.dart';
+import 'package:toastification/toastification.dart';
 
 class PersonaSettingsPage extends ConsumerStatefulWidget {
   const PersonaSettingsPage({super.key});
@@ -298,29 +299,33 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
     if (personaId == null) return;
 
     if (isPreset) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('预设人格无法删除'),
-          backgroundColor: Colors.grey[600],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      toastification.dismissAll();
+      toastification.show(
+        context: context,
+        title: const Text('预设人格无法删除'),
+        type: ToastificationType.error,
+        style: ToastificationStyle.flat,
+        primaryColor: Colors.grey[600],
+        icon: Icon(Icons.error_outline, color: Colors.grey[600]),
+        autoCloseDuration: const Duration(seconds: 2),
+        alignment: Alignment.bottomCenter,
+        showProgressBar: false,
       );
       return;
     }
 
     if (isSelected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('请先切换到其他人格再删除'),
-          backgroundColor: Colors.grey[600],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      toastification.dismissAll();
+      toastification.show(
+        context: context,
+        title: const Text('请先切换到其他人格再删除'),
+        type: ToastificationType.error,
+        style: ToastificationStyle.flat,
+        primaryColor: Colors.grey[600],
+        icon: Icon(Icons.error_outline, color: Colors.grey[600]),
+        autoCloseDuration: const Duration(seconds: 2),
+        alignment: Alignment.bottomCenter,
+        showProgressBar: false,
       );
       return;
     }
@@ -340,15 +345,20 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
             onPressed: () {
               ref.read(personaProvider.notifier).deletePersona(personaId);
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('已删除「${persona.name}」'),
-                  backgroundColor: colorScheme.primary,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+              toastification.dismissAll();
+              toastification.show(
+                context: context,
+                title: Text('已删除「${persona.name}」'),
+                type: ToastificationType.success,
+                style: ToastificationStyle.flat,
+                primaryColor: colorScheme.primary,
+                icon: Icon(
+                  Icons.check_circle_rounded,
+                  color: colorScheme.primary,
                 ),
+                autoCloseDuration: const Duration(seconds: 2),
+                alignment: Alignment.bottomCenter,
+                showProgressBar: false,
               );
             },
             child: const Text('删除', style: TextStyle(color: Colors.red)),
@@ -363,15 +373,17 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
     final personaId = int.tryParse(persona.id);
     if (personaId != null) {
       ref.read(personaProvider.notifier).setPersonaById(personaId);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('已切换为 ${persona.name}'),
-          backgroundColor: colorScheme.primary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      toastification.dismissAll();
+      toastification.show(
+        context: context,
+        title: Text('已切换为 ${persona.name}'),
+        type: ToastificationType.success,
+        style: ToastificationStyle.flat,
+        primaryColor: colorScheme.primary,
+        icon: Icon(Icons.check_circle_rounded, color: colorScheme.primary),
+        autoCloseDuration: const Duration(seconds: 2),
+        alignment: Alignment.bottomCenter,
+        showProgressBar: false,
       );
     }
   }
@@ -575,15 +587,20 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                             userTitle: userTitle.isNotEmpty ? userTitle : '主人',
                           );
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('已创建并切换到 $name'),
-                          backgroundColor: colorScheme.primary,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                      toastification.dismissAll();
+                      toastification.show(
+                        context: context,
+                        title: Text('已创建并切换到 $name'),
+                        type: ToastificationType.success,
+                        style: ToastificationStyle.flat,
+                        primaryColor: colorScheme.primary,
+                        icon: Icon(
+                          Icons.check_circle_rounded,
+                          color: colorScheme.primary,
                         ),
+                        autoCloseDuration: const Duration(seconds: 2),
+                        alignment: Alignment.bottomCenter,
+                        showProgressBar: false,
                       );
                     },
                     style: ElevatedButton.styleFrom(

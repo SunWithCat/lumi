@@ -28,11 +28,10 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   int? _lastResolution;
   final ScrollController _scrollController = ScrollController();
 
-  // 主题色
-
-  // static const _gradientTop = Color(0xFFFFE4EC);
-  // static const _primaryPink = Color(0xFFFF85A2);
-  // static const _lightPink = Color(0xFFFFB6C8);
+  // 🎀 固定配置值
+  static const _minLive2DSpace = 280.0;
+  static const _defaultChatHeight = 280.0;
+  static const _minChatHeight = 200.0;
 
   @override
   void initState() {
@@ -162,7 +161,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
     });
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: false, // 🎀 禁用自动resize，音音自己控制布局哦～
       body: Stack(
         children: [
           // Layer 0: 背景渐变 + 装饰
@@ -271,10 +270,13 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
                 children: [
                   _ActionButton(
                     icon: Icons.settings_rounded,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SettingsPage()),
-                    ),
+                    onTap: () {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SettingsPage()),
+                      );
+                    },
                   ),
                   const SizedBox(width: 8),
                   _ActionButton(
@@ -296,26 +298,23 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
     final screenHeight = MediaQuery.of(context).size.height;
     final safeTop = MediaQuery.of(context).padding.top;
 
-    const minLive2DSpace = 280.0;
-    const defaultChatHeight = 280.0;
-
     final availableHeight =
-        screenHeight - safeTop - minLive2DSpace - keyboardHeight;
+        screenHeight - safeTop - _minLive2DSpace - keyboardHeight;
     final chatHeight = keyboardHeight > 0
-        ? availableHeight.clamp(200.0, defaultChatHeight)
-        : defaultChatHeight;
+        ? availableHeight.clamp(_minChatHeight, _defaultChatHeight)
+        : _defaultChatHeight;
 
     return Positioned(
       left: 0,
       right: 0,
       bottom: 0,
       child: AnimatedPadding(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.linear,
         padding: EdgeInsets.only(bottom: keyboardHeight),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.linear,
           height: chatHeight,
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.7),
@@ -385,6 +384,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
       itemBuilder: (context, index) {
         final msg = chatState.messages[index];
         return _MessageBubble(
+          key: ValueKey(msg.id),
           text: msg.content,
           isUser: msg.isUser,
           emotion: msg.emotion,
@@ -547,6 +547,7 @@ class _MessageBubble extends StatelessWidget {
   final DateTime timestamp;
 
   const _MessageBubble({
+    super.key,
     required this.text,
     required this.isUser,
     this.emotion,

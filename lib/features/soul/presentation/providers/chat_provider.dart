@@ -67,7 +67,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   Future<void> loadHistory() async {
     if (_memoryRepo == null) return;
 
-    final history = await _memoryRepo.getConversationHistory(limit: 50);
+    final history = await _memoryRepo.getConversationHistory(limit: 100);
     if (history.isNotEmpty) {
       state = state.copyWith(messages: history);
     }
@@ -104,7 +104,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
         if (_memoryRepo != null) {
           relevantMemories = await _memoryRepo.searchRelevantMemories(
             content,
-            limit: 5,
+            limit: 10,
           );
         }
 

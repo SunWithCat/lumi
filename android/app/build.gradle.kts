@@ -27,7 +27,7 @@ android {
 
         // NDK 配置 - 只编译 arm64 (现代手机)
         ndk {
-            abiFilters += listOf("arm64-v8a")
+            abiFilters += listOf("arm64-v8a","x86_64")
         }
 
         // CMake 配置

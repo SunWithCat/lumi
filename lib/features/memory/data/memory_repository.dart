@@ -5,9 +5,6 @@ import 'package:lumi/features/soul/domain/entities/chat_message.dart';
 import 'package:lumi/features/soul/domain/entities/emotion.dart';
 
 /// 记忆仓库
-/// 
-/// 负责管理对话历史和长期记忆的存储与检索。
-/// 
 /// ## 职责
 /// 1. 对话消息的 CRUD
 /// 2. 长期记忆的存储与检索
@@ -32,13 +29,19 @@ class MemoryRepository {
   /// 获取对话历史
   Future<List<ChatMessage>> getConversationHistory({int limit = 50}) async {
     final rows = await _db.getRecentConversations(limit: limit);
-    return rows.reversed.map((row) => ChatMessage(
-      id: row.messageId,
-      content: row.content,
-      isUser: row.isUser,
-      timestamp: row.timestamp,
-      emotion: row.emotion != null ? EmotionType.fromTag(row.emotion!) : null,
-    )).toList();
+    return rows.reversed
+        .map(
+          (row) => ChatMessage(
+            id: row.messageId,
+            content: row.content,
+            isUser: row.isUser,
+            timestamp: row.timestamp,
+            emotion: row.emotion != null
+                ? EmotionType.fromTag(row.emotion!)
+                : null,
+          ),
+        )
+        .toList();
   }
 
   /// 保存重要记忆
@@ -47,21 +50,24 @@ class MemoryRepository {
   }
 
   /// 搜索相关记忆 (用于 RAG)
-  /// 
+  ///
   /// 策略：
   /// 1. 提取查询中的关键词
   /// 2. 在记忆中搜索包含这些关键词的内容
   /// 3. 按重要性排序返回
-  Future<List<String>> searchRelevantMemories(String query, {int limit = 5}) async {
+  Future<List<String>> searchRelevantMemories(
+    String query, {
+    int limit = 10,
+  }) async {
     // 提取关键词（简单分词）
     final keywords = _extractKeywords(query);
-    
+
     if (keywords.isEmpty) {
       // 没有关键词，返回最重要的记忆
       final memories = await _db.getImportantMemories(limit: limit);
       return memories.map((m) => m.content).toList();
     }
-    
+
     // 搜索包含任意关键词的记忆
     final allMatches = <Memory>[];
     for (final keyword in keywords) {
@@ -72,40 +78,76 @@ class MemoryRepository {
         }
       }
     }
-    
+
     // 按重要性排序
     allMatches.sort((a, b) => b.importance.compareTo(a.importance));
-    
+
     return allMatches.take(limit).map((m) => m.content).toList();
   }
 
   /// 提取关键词
-  /// 
+  ///
   /// 简单策略：过滤掉常见停用词，保留有意义的词
   List<String> _extractKeywords(String text) {
     // 停用词列表
     const stopWords = {
-      '的', '了', '是', '在', '我', '你', '他', '她', '它',
-      '这', '那', '有', '和', '与', '或', '但', '如果',
-      '什么', '怎么', '为什么', '哪里', '谁', '吗', '呢', '啊',
-      '好', '很', '太', '真', '都', '也', '就', '还', '又',
+      '的',
+      '了',
+      '是',
+      '在',
+      '我',
+      '你',
+      '他',
+      '她',
+      '它',
+      '这',
+      '那',
+      '有',
+      '和',
+      '与',
+      '或',
+      '但',
+      '如果',
+      '什么',
+      '怎么',
+      '为什么',
+      '哪里',
+      '谁',
+      '吗',
+      '呢',
+      '啊',
+      '好',
+      '很',
+      '太',
+      '真',
+      '都',
+      '也',
+      '就',
+      '还',
+      '又',
     };
-    
+
     // 简单分词（按标点和空格分割）
     final words = text
-        .replaceAll(RegExp(r'[，。！？、；：""''（）\[\]【】]'), ' ')
+        .replaceAll(
+          RegExp(
+            r'[，。！？、；：""'
+            '（）\[\]【】]',
+          ),
+          ' ',
+        )
         .split(RegExp(r'\s+'))
         .where((w) => w.length >= 2 && !stopWords.contains(w))
         .toList();
-    
-    return words.take(5).toList(); // 最多 5 个关键词
+
+    return words.take(10).toList(); // 最多 10 个关键词
   }
 
   /// 获取重要记忆摘要
-  Future<String> getMemorySummary({int limit = 5}) async {
+  Future<String> getMemorySummary({int limit = 10}) async {
     final memories = await _db.getImportantMemories(limit: limit);
     if (memories.isEmpty) return '';
-    
+
     return '【记忆】\n${memories.map((m) => '- ${m.content}').join('\n')}';
   }
 
@@ -114,25 +156,25 @@ class MemoryRepository {
     await _db.clearConversations();
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  //                      记忆压缩与清理
-  // ═══════════════════════════════════════════════════════════════════
-
   /// 获取所有记忆（用于压缩分析）
   Future<List<MemoryItem>> getAllMemories() async {
     final memories = await _db.getImportantMemories(limit: 1000);
-    return memories.map((m) => MemoryItem(
-      id: m.id,
-      content: m.content,
-      importance: m.importance,
-      createdAt: m.createdAt,
-      lastAccessedAt: m.lastAccessedAt,
-      accessCount: m.accessCount,
-    )).toList();
+    return memories
+        .map(
+          (m) => MemoryItem(
+            id: m.id,
+            content: m.content,
+            importance: m.importance,
+            createdAt: m.createdAt,
+            lastAccessedAt: m.lastAccessedAt,
+            accessCount: m.accessCount,
+          ),
+        )
+        .toList();
   }
 
   /// 检查是否存在相似记忆
-  /// 
+  ///
   /// 在保存新记忆前调用，避免重复
   Future<bool> hasSimilarMemory(String content) async {
     final memories = await getAllMemories();
@@ -145,11 +187,14 @@ class MemoryRepository {
   }
 
   /// 保存记忆（带去重检查）
-  /// 
+  ///
   /// 如果已存在相似记忆，则更新其重要性而不是新增
-  Future<void> saveMemoryWithDedup(String content, {double importance = 0.5}) async {
+  Future<void> saveMemoryWithDedup(
+    String content, {
+    double importance = 0.5,
+  }) async {
     final memories = await getAllMemories();
-    
+
     // 查找相似记忆
     for (final memory in memories) {
       if (_compactor.areSimilar(content, memory.content)) {
@@ -163,18 +208,18 @@ class MemoryRepository {
         return;
       }
     }
-    
+
     // 没有相似记忆，新增
     await _db.saveMemory(content: content, importance: importance);
   }
 
   /// 执行记忆压缩
-  /// 
+  ///
   /// 返回压缩结果，包括合并和清理的记忆数量
   Future<CompactionResult> compactMemories({bool dryRun = true}) async {
     final memories = await getAllMemories();
     final result = _compactor.compact(memories);
-    
+
     if (!dryRun) {
       // 执行实际的删除操作
       for (final merge in result.mergeResults) {
@@ -183,18 +228,19 @@ class MemoryRepository {
           AppLogger.d('Deleted merged memory: ${item.id}');
         }
       }
-      
+
       for (final item in result.cleanupCandidates) {
         // 避免重复删除（可能已在合并中删除）
-        final alreadyRemoved = result.mergeResults
-            .any((m) => m.remove.any((r) => r.id == item.id));
+        final alreadyRemoved = result.mergeResults.any(
+          (m) => m.remove.any((r) => r.id == item.id),
+        );
         if (!alreadyRemoved) {
           await _db.deleteMemory(item.id);
           AppLogger.d('Deleted low-importance memory: ${item.id}');
         }
       }
     }
-    
+
     AppLogger.d('Compaction result: $result');
     return result;
   }
@@ -210,13 +256,14 @@ class MemoryRepository {
         newestDate: null,
       );
     }
-    
+
     final totalImportance = memories.fold<double>(
-      0, (sum, m) => sum + m.importance,
+      0,
+      (sum, m) => sum + m.importance,
     );
-    
+
     memories.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    
+
     return MemoryStats(
       totalCount: memories.length,
       avgImportance: totalImportance / memories.length,
@@ -241,6 +288,6 @@ class MemoryStats {
   });
 
   @override
-  String toString() => 
+  String toString() =>
       'MemoryStats(count: $totalCount, avgImportance: ${avgImportance.toStringAsFixed(2)})';
 }

@@ -156,7 +156,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
 
   /// 设置 LLM Max Tokens
   Future<void> setLLMMaxTokens(int value) async {
-    final clamped = value.clamp(100, 4096);
+    final clamped = value.clamp(100, 8192);
     state = state.copyWith(
       llmSettings: state.llmSettings.copyWith(maxTokens: clamped),
     );

@@ -7,6 +7,7 @@ import 'package:lumi/features/memory/presentation/pages/memory_management_page.d
 import 'package:lumi/features/settings/presentation/pages/api_settings_page.dart';
 import 'package:lumi/features/settings/presentation/pages/llm_settings_page.dart';
 import 'package:lumi/features/soul/presentation/pages/persona_settings_page.dart';
+import 'package:toastification/toastification.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -352,13 +353,17 @@ class SettingsPage extends ConsumerWidget {
   ) {
     final colorScheme = context.colorScheme;
     ref.read(appSettingsProvider.notifier).setRenderQuality(quality);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('分辨率已切换为${quality.label}'),
-        backgroundColor: colorScheme.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+    toastification.dismissAll();
+    toastification.show(
+      context: context,
+      title: Text('分辨率已切换为${quality.label}'),
+      type: ToastificationType.success,
+      style: ToastificationStyle.flat,
+      primaryColor: colorScheme.primary, // ← 用主题色替换默认的绿色！
+      icon: Icon(Icons.check_circle_rounded, color: colorScheme.primary),
+      autoCloseDuration: const Duration(seconds: 2),
+      alignment: Alignment.bottomCenter,
+      showProgressBar: false, // 关掉底部的进度条也可以更清爽
     );
   }
 }
