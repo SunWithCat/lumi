@@ -42,18 +42,26 @@ class LLMSettings {
   final double temperature; // 0.0-2.0, 越高越随机
   final int maxTokens; // 最大输出 token 数
   final double topP; // 0.0-1.0, nucleus sampling
+  final bool enableSearch;
 
   const LLMSettings({
     this.temperature = 0.7,
     this.maxTokens = 500,
     this.topP = 1.0,
+    this.enableSearch = false,
   });
 
-  LLMSettings copyWith({double? temperature, int? maxTokens, double? topP}) {
+  LLMSettings copyWith({
+    double? temperature,
+    int? maxTokens,
+    double? topP,
+    bool? enableSearch,
+  }) {
     return LLMSettings(
       temperature: temperature ?? this.temperature,
       maxTokens: maxTokens ?? this.maxTokens,
       topP: topP ?? this.topP,
+      enableSearch: enableSearch ?? this.enableSearch,
     );
   }
 }
@@ -92,6 +100,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
   static const _keyApiBaseUrl = 'api_base_url';
   static const _keyApiKey = 'api_key';
   static const _keyApiModel = 'api_model';
+  static const _keyEnableSearch = 'enable_search';
 
   final AppDatabase _db;
   late final Future<void> _loadFuture;
@@ -105,6 +114,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     final tempStr = await _db.getSetting(_keyLLMTemperature);
     final maxTokensStr = await _db.getSetting(_keyLLMMaxTokens);
     final topPStr = await _db.getSetting(_keyLLMTopP);
+    final enableSearch = await _db.getSetting(_keyEnableSearch);
     final baseUrlStr = await _db.getSetting(_keyApiBaseUrl);
     final apiKeyStr = await _db.getSetting(_keyApiKey);
     final modelStr = await _db.getSetting(_keyApiModel);
@@ -119,6 +129,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
       temperature: double.tryParse(tempStr ?? '') ?? 0.7,
       maxTokens: int.tryParse(maxTokensStr ?? '') ?? 500,
       topP: double.tryParse(topPStr ?? '') ?? 1.0,
+      enableSearch: bool.tryParse(enableSearch ?? '') ?? false,
     );
 
     final apiSettings = ApiSettings(
@@ -170,6 +181,14 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
       llmSettings: state.llmSettings.copyWith(topP: clamped),
     );
     await _db.setSetting(_keyLLMTopP, clamped.toString());
+  }
+
+  /// 设置联网搜索
+  Future<void> setEnableSearch(bool value) async {
+    state = state.copyWith(
+      llmSettings: state.llmSettings.copyWith(enableSearch: value),
+    );
+    await _db.setSetting(_keyEnableSearch, value.toString());
   }
 
   /// 批量更新 LLM 设置

@@ -271,7 +271,6 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
                   _ActionButton(
                     icon: Icons.settings_rounded,
                     onTap: () {
-                      FocusManager.instance.primaryFocus?.unfocus();
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const SettingsPage()),
@@ -304,49 +303,44 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
         ? availableHeight.clamp(_minChatHeight, _defaultChatHeight)
         : _defaultChatHeight;
 
-    return Positioned(
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
       left: 0,
       right: 0,
-      bottom: 0,
-      child: AnimatedPadding(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.linear,
-        padding: EdgeInsets.only(bottom: keyboardHeight),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.linear,
-          height: chatHeight,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.7),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.primary.withValues(alpha: 0.1),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
+      bottom: keyboardHeight,
+      height: chatHeight,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.7),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.primary.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colorScheme.secondary.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(2),
               ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.secondary.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Expanded(child: _buildMessageList(chatState)),
-              if (chatState.isLoading) _buildLoadingIndicator(),
-              if (chatState.error != null) _buildErrorBanner(chatState.error!),
-              ChatInput(
-                onSend: (text) =>
-                    ref.read(chatProvider.notifier).sendMessage(text),
-              ),
-            ],
-          ),
+            ),
+            Expanded(child: _buildMessageList(chatState)),
+            if (chatState.isLoading) _buildLoadingIndicator(),
+            if (chatState.error != null) _buildErrorBanner(chatState.error!),
+            ChatInput(
+              onSend: (text) =>
+                  ref.read(chatProvider.notifier).sendMessage(text),
+            ),
+          ],
         ),
       ),
     );
@@ -622,6 +616,25 @@ class _MessageBubble extends StatelessWidget {
   }
 
   String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDay = DateTime(time.year, time.month, time.day);
+    final difference = today.difference(messageDay).inDays;
+    final timeStr =
+        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    if (difference == 0) {
+      return timeStr;
+    } else if (difference == 1) {
+      return '昨天 $timeStr';
+    } else if (time.year == now.year) {
+      final month = time.month.toString().padLeft(2, '0');
+      final day = time.day.toString().padLeft(2, '0');
+      return '$month-$day $timeStr';
+    } else {
+      final year = time.year;
+      final month = time.month.toString().padLeft(2, '0');
+      final day = time.day.toString().padLeft(2, '0');
+      return '$year-$month-$day $timeStr';
+    }
   }
 }

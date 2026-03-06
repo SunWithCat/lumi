@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/config/app_settings.dart';
 import 'package:lumi/core/theme/app_theme.dart';
 import 'package:lumi/core/theme/theme_provider.dart';
+import 'package:lumi/core/utils/logger.dart';
 import 'package:lumi/features/memory/presentation/pages/memory_management_page.dart';
 import 'package:lumi/features/settings/presentation/pages/api_settings_page.dart';
 import 'package:lumi/features/settings/presentation/pages/llm_settings_page.dart';
@@ -70,6 +71,8 @@ class SettingsPage extends ConsumerWidget {
               MaterialPageRoute(builder: (_) => const ApiSettingsPage()),
             ),
           ),
+          const SizedBox(height: 12),
+          _buildSearchToggle(context, ref, settings),
           const SizedBox(height: 24),
           _buildSectionTitle('数据'),
           _buildSettingCard(
@@ -167,6 +170,79 @@ class SettingsPage extends ConsumerWidget {
             Icon(Icons.chevron_right_rounded, color: Colors.grey[400]),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSearchToggle(
+    BuildContext context,
+    WidgetRef ref,
+    AppSettingsState settings,
+  ) {
+    final colorScheme = context.colorScheme;
+    final hasEnable = settings.llmSettings.enableSearch;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: colorScheme.secondary.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.language_rounded,
+              color: colorScheme.primary,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '联网搜索',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF333333),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  hasEnable ? '已开启，会额外消耗 Token 量' : '关闭中',
+                  style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+          ),
+          Transform.scale(
+            scale: 0.85,
+            child: Switch(
+              value: hasEnable,
+              activeColor: colorScheme.primary,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              onChanged: (v) {
+                ref.read(appSettingsProvider.notifier).setEnableSearch(v);
+                AppLogger.d(v ? '开启联网' : '关闭联网');
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -133,6 +133,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
           temperature: _llmSettings.temperature,
           maxTokens: _llmSettings.maxTokens,
           topP: _llmSettings.topP,
+          enableSearch: _llmSettings.enableSearch,
         );
 
         final parsed = ResponseParser.parse(response);
