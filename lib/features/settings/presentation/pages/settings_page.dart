@@ -224,7 +224,7 @@ class SettingsPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  hasEnable ? '已开启，会额外消耗 Token 量' : '关闭中',
+                  hasEnable ? '已开启，会额外消耗 Tokens' : '关闭中',
                   style: TextStyle(fontSize: 13, color: Colors.grey[500]),
                 ),
               ],

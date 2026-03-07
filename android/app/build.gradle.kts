@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
@@ -14,9 +14,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
+    kotlinOptions { jvmTarget = JavaVersion.VERSION_11.toString() }
 
     defaultConfig {
         applicationId = "com.sunwithcat.lumi"
@@ -25,10 +23,7 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
-        // NDK 配置 - 只编译 arm64 (现代手机)
-        ndk {
-            abiFilters += listOf("arm64-v8a","x86_64")
-        }
+        //  移除了 ndk { abiFilters } 块，因为它会跟 splits 冲突
 
         // CMake 配置
         externalNativeBuild {
@@ -57,8 +52,16 @@ android {
             )
         }
     }
+
+    //  只保留 splits 配置来控制架构，它会自动告诉编译器该编哪些、该分哪些
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "x86_64")
+            isUniversalApk = false
+        }
+    }
 }
 
-flutter {
-    source = "../.."
-}
+flutter { source = "../.." }

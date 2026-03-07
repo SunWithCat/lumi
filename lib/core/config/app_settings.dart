@@ -43,12 +43,14 @@ class LLMSettings {
   final int maxTokens; // 最大输出 token 数
   final double topP; // 0.0-1.0, nucleus sampling
   final bool enableSearch;
+  final int maxContextMessages; // 上下文消息数量限制
 
   const LLMSettings({
     this.temperature = 0.7,
     this.maxTokens = 500,
     this.topP = 1.0,
     this.enableSearch = false,
+    this.maxContextMessages = 300,
   });
 
   LLMSettings copyWith({
@@ -56,12 +58,14 @@ class LLMSettings {
     int? maxTokens,
     double? topP,
     bool? enableSearch,
+    int? maxContextMessages,
   }) {
     return LLMSettings(
       temperature: temperature ?? this.temperature,
       maxTokens: maxTokens ?? this.maxTokens,
       topP: topP ?? this.topP,
       enableSearch: enableSearch ?? this.enableSearch,
+      maxContextMessages: maxContextMessages ?? this.maxContextMessages,
     );
   }
 }
@@ -101,6 +105,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
   static const _keyApiKey = 'api_key';
   static const _keyApiModel = 'api_model';
   static const _keyEnableSearch = 'enable_search';
+  static const _keyMaxContextMessages = 'max_context_messages';
 
   final AppDatabase _db;
   late final Future<void> _loadFuture;
@@ -118,6 +123,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     final baseUrlStr = await _db.getSetting(_keyApiBaseUrl);
     final apiKeyStr = await _db.getSetting(_keyApiKey);
     final modelStr = await _db.getSetting(_keyApiModel);
+    final maxContextMessagesStr = await _db.getSetting(_keyMaxContextMessages);
 
     RenderQuality quality = RenderQuality.medium;
     if (qualityStr != null) {
@@ -130,6 +136,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
       maxTokens: int.tryParse(maxTokensStr ?? '') ?? 500,
       topP: double.tryParse(topPStr ?? '') ?? 1.0,
       enableSearch: bool.tryParse(enableSearch ?? '') ?? false,
+      maxContextMessages: int.tryParse(maxContextMessagesStr ?? '') ?? 300,
     );
 
     final apiSettings = ApiSettings(
@@ -189,6 +196,15 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
       llmSettings: state.llmSettings.copyWith(enableSearch: value),
     );
     await _db.setSetting(_keyEnableSearch, value.toString());
+  }
+
+  /// 设置上下文消息数量限制
+  Future<void> setMaxContextMessages(int value) async {
+    final clamped = value.clamp(50, 1000);
+    state = state.copyWith(
+      llmSettings: state.llmSettings.copyWith(maxContextMessages: clamped),
+    );
+    await _db.setSetting(_keyMaxContextMessages, clamped.toString());
   }
 
   /// 批量更新 LLM 设置

@@ -9,7 +9,7 @@ import 'package:lumi/features/soul/domain/entities/chat_message.dart';
 
 class ContextManager {
   /// 默认配置
-  static const int defaultMaxContextMessages = 100;
+  static const int defaultMaxContextMessages = 300;
   static const int defaultMaxMemories = 10;
   static const int defaultEstimatedTokensPerMessage = 50;
 

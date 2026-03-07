@@ -49,7 +49,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final PersonaConfig _persona;
   final LLMSettings _llmSettings;
   final _uuid = const Uuid();
-  final _contextManager = ContextManager();
+  final ContextManager _contextManager;
   final _memoryEvaluator = MemoryEvaluator();
 
   ChatNotifier({
@@ -61,13 +61,18 @@ class ChatNotifier extends StateNotifier<ChatState> {
        _memoryRepo = memoryRepo,
        _persona = persona,
        _llmSettings = llmSettings,
+       _contextManager = ContextManager(
+         maxContextMessages: llmSettings.maxContextMessages,
+       ),
        super(const ChatState());
 
   /// 初始化：加载历史对话
   Future<void> loadHistory() async {
     if (_memoryRepo == null) return;
 
-    final history = await _memoryRepo.getConversationHistory(limit: 100);
+    final history = await _memoryRepo.getConversationHistory(
+      limit: _contextManager.maxContextMessages,
+    );
     if (history.isNotEmpty) {
       state = state.copyWith(messages: history);
     }

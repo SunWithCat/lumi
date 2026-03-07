@@ -76,6 +76,20 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                 ref.read(appSettingsProvider.notifier).setLLMTopP(v),
             valueLabel: _getTopPLabel(llm.topP),
           ),
+          const SizedBox(height: 16),
+          _buildSliderCard(
+            context: context,
+            title: '上下文长度',
+            subtitle: '消息数: ${llm.maxContextMessages}',
+            description: '保留的对话历史条数，越大记忆越长但消耗更多 Tokens',
+            value: llm.maxContextMessages.toDouble(),
+            min: 50,
+            max: 1000,
+            divisions: 19,
+            onChanged: (v) =>
+                ref.read(appSettingsProvider.notifier).setMaxContextMessages(v.round()),
+            valueLabel: _getMaxContextMessagesLabel(llm.maxContextMessages),
+          ),
           const SizedBox(height: 20),
           _buildPresetButtons(context),
         ],
@@ -306,5 +320,12 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
     if (value <= 0.5) return '精确';
     if (value <= 0.9) return '平衡';
     return '广泛';
+  }
+
+  String _getMaxContextMessagesLabel(int value) {
+    if (value <= 100) return '较短';
+    if (value <= 300) return '标准';
+    if (value <= 500) return '较长';
+    return '超长';
   }
 }
