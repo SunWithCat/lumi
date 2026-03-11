@@ -28,9 +28,6 @@ dependencies:
   # 序列化
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
-
-  # 分词
-  jieba_flutter: ^0.2.0
   
   # 工具
   uuid: ^4.5.1

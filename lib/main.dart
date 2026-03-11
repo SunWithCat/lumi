@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jieba_flutter/analysis/jieba_segmenter.dart';
 import 'package:lumi/app.dart';
 import 'package:lumi/core/utils/logger.dart';
 
@@ -11,7 +10,6 @@ void main() async {
   AppLogger.init();
   AppLogger.i('Project Lumi starting...');
 
-  await JiebaSegmenter.init();
 
   runApp(const ProviderScope(child: LumiApp()));
 }

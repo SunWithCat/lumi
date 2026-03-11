@@ -1,4 +1,3 @@
-import 'package:jieba_flutter/analysis/jieba_segmenter.dart';
 import 'package:lumi/core/utils/logger.dart';
 import 'package:lumi/features/memory/data/database/app_database.dart';
 import 'package:lumi/features/memory/domain/memory_compactor.dart';
@@ -13,12 +12,9 @@ import 'package:lumi/features/soul/domain/entities/emotion.dart';
 /// 4. 记忆压缩与清理
 class MemoryRepository {
   final AppDatabase _db;
-  late final MemoryCompactor _compactor;
-  final JiebaSegmenter _segmenter = JiebaSegmenter();
+  final MemoryCompactor _compactor = MemoryCompactor();
 
-  MemoryRepository(this._db) {
-    _compactor = MemoryCompactor(segmenter: _segmenter);
-  }
+  MemoryRepository(this._db);
 
   /// 保存对话消息
   Future<void> saveMessage(ChatMessage message) async {
@@ -91,7 +87,7 @@ class MemoryRepository {
 
   /// 提取关键词
   ///
-  /// 简单策略：过滤掉常见停用词，保留有意义的词
+  /// 混合策略：中文使用 Bigram 切分，非中文按空格分割
   List<String> _extractKeywords(String text) {
     // 停用词列表
     const stopWords = {
@@ -131,13 +127,36 @@ class MemoryRepository {
       '又',
     };
 
-    // 简单分词（按标点和空格分割）
-    final query = text.replaceAll(RegExp(r'[，。！？、；：“”‘’（）\[\]【】]'), ' ');
-    final tokens = _segmenter.process(query, SegMode.SEARCH);
-    final words = tokens
-        .map((token) => token.word)
-        .where((w) => w.length >= 2 && !stopWords.contains(w))
-        .toList();
+    // 清理标点符号
+    final cleanText = text.replaceAll(
+      RegExp('[，。！？、；：“”‘’（）\\[\\]【】:,.\\s]+'),
+      ' ',
+    );
+
+    // 混合分词策略：空格分割 + 中文 Bigram
+    final words = <String>{};
+
+    for (final segment in cleanText.split(' ')) {
+      if (segment.isEmpty) continue;
+
+      // 如果是纯中文片段，使用 Bigram 切分
+      if (RegExp(r'^[\u4e00-\u9fa5]+$').hasMatch(segment)) {
+        // 先保留完整词（如果长度 >= 2）
+        if (segment.length >= 2 && !stopWords.contains(segment)) {
+          words.add(segment);
+        }
+        // Bigram 切分
+        for (var i = 0; i < segment.length - 1; i++) {
+          final bigram = segment.substring(i, i + 2);
+          if (!stopWords.contains(bigram)) {
+            words.add(bigram);
+          }
+        }
+      } else if (segment.length >= 2 && !stopWords.contains(segment)) {
+        // 非中文（英文等）直接保留
+        words.add(segment);
+      }
+    }
 
     return words.take(10).toList(); // 最多 10 个关键词
   }

@@ -1,5 +1,3 @@
-import 'package:jieba_flutter/analysis/jieba_segmenter.dart';
-
 /// 记忆压缩器
 ///
 /// 负责管理记忆的生命周期，包括：
@@ -52,14 +50,11 @@ class MemoryCompactor {
   /// 最低重要性阈值（低于此值可被清理）
   final double minImportance;
 
-  final JiebaSegmenter _segmenter;
-
-  MemoryCompactor({
+  const MemoryCompactor({
     this.similarityThreshold = 0.6,
     this.decayRate = 0.02,
     this.minImportance = 0.2,
-    JiebaSegmenter? segmenter,
-  }) : _segmenter = segmenter ?? JiebaSegmenter();
+  });
 
   /// 检测两条记忆是否相似
   ///
@@ -90,7 +85,7 @@ class MemoryCompactor {
     return intersection.length / union.length;
   }
 
-  /// 分词（简单实现）
+  /// 分词（中文 Bigram + 空格混合策略）
   Set<String> _tokenize(String text) {
     // 移除标点和停用词
     const stopWords = {
@@ -115,12 +110,35 @@ class MemoryCompactor {
       '表示',
     };
 
-    final cleanText = text.replaceAll(RegExp(r'[，。！？、；：“”‘’（）\[\]【】:,.]'), ' ');
-    final tokens = _segmenter.process(cleanText, SegMode.SEARCH);
-    return tokens
-        .map((token) => token.word)
-        .where((w) => w.length >= 2 && !stopWords.contains(w))
-        .toSet();
+    final cleanText = text.replaceAll(
+      RegExp(r'[，。！？、；：“”‘’（）\[\]【】:,.\s]+'),
+      ' ',
+    );
+
+    // 混合分词策略：空格分割 + 中文 Bigram
+    final words = <String>{};
+
+    for (final segment in cleanText.split(' ')) {
+      if (segment.isEmpty) continue;
+
+      // 如果是纯中文片段，使用 Bigram 切分
+      if (RegExp(r'^[\u4e00-\u9fa5]+$').hasMatch(segment)) {
+        if (segment.length >= 2 && !stopWords.contains(segment)) {
+          words.add(segment);
+        }
+
+        for (var i = 0; i < segment.length - 1; i++) {
+          final bigram = segment.substring(i, i + 2);
+          if (!stopWords.contains(bigram)) {
+            words.add(bigram);
+          }
+        }
+      } else if (segment.length >= 2 && !stopWords.contains(segment)) {
+        words.add(segment);
+      }
+    }
+
+    return words;
   }
 
   /// 合并相似记忆
