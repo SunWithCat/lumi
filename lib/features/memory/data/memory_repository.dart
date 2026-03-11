@@ -1,3 +1,4 @@
+import 'package:jieba_flutter/analysis/jieba_segmenter.dart';
 import 'package:lumi/core/utils/logger.dart';
 import 'package:lumi/features/memory/data/database/app_database.dart';
 import 'package:lumi/features/memory/domain/memory_compactor.dart';
@@ -12,9 +13,12 @@ import 'package:lumi/features/soul/domain/entities/emotion.dart';
 /// 4. 记忆压缩与清理
 class MemoryRepository {
   final AppDatabase _db;
-  final MemoryCompactor _compactor;
+  late final MemoryCompactor _compactor;
+  final JiebaSegmenter _segmenter = JiebaSegmenter();
 
-  MemoryRepository(this._db) : _compactor = MemoryCompactor();
+  MemoryRepository(this._db) {
+    _compactor = MemoryCompactor(segmenter: _segmenter);
+  }
 
   /// 保存对话消息
   Future<void> saveMessage(ChatMessage message) async {
@@ -128,15 +132,10 @@ class MemoryRepository {
     };
 
     // 简单分词（按标点和空格分割）
-    final words = text
-        .replaceAll(
-          RegExp(
-            r'[，。！？、；：""'
-            '（）\[\]【】]',
-          ),
-          ' ',
-        )
-        .split(RegExp(r'\s+'))
+    final query = text.replaceAll(RegExp(r'[，。！？、；：“”‘’（）\[\]【】]'), ' ');
+    final tokens = _segmenter.process(query, SegMode.SEARCH);
+    final words = tokens
+        .map((token) => token.word)
         .where((w) => w.length >= 2 && !stopWords.contains(w))
         .toList();
 

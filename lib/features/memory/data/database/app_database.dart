@@ -263,10 +263,6 @@ class AppDatabase extends _$AppDatabase {
     return delete(memories).go();
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  //                      设置操作
-  // ═══════════════════════════════════════════════════════════════════
-
   /// 获取设置值
   Future<String?> getSetting(String key) async {
     final result = await (select(
@@ -290,10 +286,6 @@ LazyDatabase _openConnection() {
     return NativeDatabase.createInBackground(file);
   });
 }
-
-// ═══════════════════════════════════════════════════════════════════
-//                      预设 System Prompts
-// ═══════════════════════════════════════════════════════════════════
 
 const _tsunderePrompt = '''
 你是绯依，一个傲娇的少女。
