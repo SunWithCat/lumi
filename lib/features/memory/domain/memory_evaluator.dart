@@ -1,17 +1,17 @@
 /// 记忆重要性评估器
-/// 
+///
 /// 负责判断一段对话是否值得被记住，以及记忆的重要程度。
-/// 
+///
 /// ## 为什么需要记忆评估？
-/// 
+///
 /// 不是所有对话都值得记住：
 /// - "你好" → 不重要，不需要记
 /// - "我叫小明" → 重要！用户身份信息
 /// - "我喜欢猫" → 重要！用户偏好
 /// - "今天天气真好" → 不太重要，闲聊
-/// 
+///
 /// ## 评估策略
-/// 
+///
 /// 1. 关键词匹配 - 检测特定词汇（名字、喜欢、生日等）
 /// 2. 句式识别 - 检测自我介绍、偏好表达等句式
 /// 3. 情感强度 - 强烈情感的对话更值得记住
@@ -23,12 +23,12 @@ class MemoryEvaluator {
     '我叫', '我的名字', '名字是', '我是',
     '我今年', '岁了', '生日',
     '我住在', '我在', '工作',
-    
+
     // 偏好信息
     '我喜欢', '我爱', '我最喜欢', '我超喜欢',
     '我讨厌', '我不喜欢', '我害怕',
     '我想要', '我希望', '我的梦想',
-    
+
     // 关系信息
     '我的朋友', '我的家人', '我的父母', '我的男朋友', '我的女朋友',
     '我养了', '我有一只', '我有一个',
@@ -39,25 +39,35 @@ class MemoryEvaluator {
     // 情感表达
     '好开心', '好难过', '好生气', '好累', '好烦',
     '太棒了', '太糟糕', '受不了',
-    
+
     // 经历分享
     '今天发生', '昨天', '上周', '最近',
     '我去了', '我看了', '我吃了', '我买了',
-    
+
     // 计划意图
     '我打算', '我准备', '我要去', '明天',
   ];
 
   /// 低重要性模式（闲聊、问候）
   static const _lowImportancePatterns = [
-    '你好', '早上好', '晚上好', '晚安',
-    '在吗', '在干嘛', '干嘛呢',
-    '哈哈', '嗯嗯', '好的', '知道了',
-    '谢谢', '不客气', '没关系',
+    '你好',
+    '早上好',
+    '晚上好',
+    '晚安',
+    '在吗',
+    '在干嘛',
+    '干嘛呢',
+    '哈哈',
+    '嗯嗯',
+    '好的',
+    '知道了',
+    '谢谢',
+    '不客气',
+    '没关系',
   ];
 
   /// 评估一条消息的记忆重要性
-  /// 
+  ///
   /// 返回 0.0-1.0 的重要性分数：
   /// - 0.0-0.3: 不值得记忆
   /// - 0.3-0.6: 可选记忆
@@ -86,7 +96,7 @@ class MemoryEvaluator {
 
     // 3. 检查低重要性模式（降分）
     for (final pattern in _lowImportancePatterns) {
-      if (userMessage.trim() == pattern || 
+      if (userMessage.trim() == pattern ||
           userMessage.length < 5 && userMessage.contains(pattern)) {
         score -= 0.3;
         reasons.add('简单问候/闲聊');
@@ -128,7 +138,7 @@ class MemoryEvaluator {
   }
 
   /// 提取值得记忆的内容
-  /// 
+  ///
   /// 将用户消息转换为简洁的记忆格式
   String _extractMemoryContent(String userMessage) {
     // 简单处理：直接使用原文，后续可以用 LLM 提取
@@ -147,11 +157,13 @@ class MemoryEvaluator {
     for (final (userMsg, aiMsg) in exchanges) {
       final eval = evaluate(userMsg, aiResponse: aiMsg);
       if (eval.shouldRemember) {
-        candidates.add(MemoryCandidate(
-          content: eval.suggestedContent,
-          importance: eval.score,
-          source: userMsg,
-        ));
+        candidates.add(
+          MemoryCandidate(
+            content: eval.suggestedContent,
+            importance: eval.score,
+            source: userMsg,
+          ),
+        );
       }
     }
 
@@ -165,13 +177,13 @@ class MemoryEvaluator {
 class MemoryEvaluation {
   /// 重要性分数 (0.0-1.0)
   final double score;
-  
+
   /// 是否应该记住
   final bool shouldRemember;
-  
+
   /// 评估理由
   final List<String> reasons;
-  
+
   /// 建议的记忆内容
   final String suggestedContent;
 
@@ -183,7 +195,8 @@ class MemoryEvaluation {
   });
 
   @override
-  String toString() => 'MemoryEvaluation(score: $score, remember: $shouldRemember, reasons: $reasons)';
+  String toString() =>
+      'MemoryEvaluation(score: $score, remember: $shouldRemember, reasons: $reasons)';
 }
 
 /// 记忆候选

@@ -161,7 +161,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
     });
 
     return Scaffold(
-      resizeToAvoidBottomInset: false, // 🎀 禁用自动resize，音音自己控制布局哦～
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           // Layer 0: 背景渐变 + 装饰
@@ -377,12 +377,14 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
       itemCount: chatState.messages.length,
       itemBuilder: (context, index) {
         final msg = chatState.messages[index];
-        return _MessageBubble(
-          key: ValueKey(msg.id),
-          text: msg.content,
-          isUser: msg.isUser,
-          emotion: msg.emotion,
-          timestamp: msg.timestamp,
+        return RepaintBoundary(
+          child: _MessageBubble(
+            key: ValueKey(msg.id),
+            text: msg.content,
+            isUser: msg.isUser,
+            emotion: msg.emotion,
+            timestamp: msg.timestamp,
+          ),
         );
       },
     );

@@ -12,7 +12,7 @@
 - 🧠 **AI 对话** - 基于 LLM 的自然语言对话
 - 💕 **情感系统** - 9 种情感状态，自动映射到表情动作
 - 💾 **记忆系统** - 记住用户的重要信息，实现长期记忆
-- 🎨 **精美 UI** - 粉色系可爱风格界面
+- 🎨 **精美 UI** - 粉色/蓝色系风格界面
 
 ---
 
@@ -25,39 +25,11 @@
 - Android Studio / VS Code
 - Android 设备或模拟器
 
-### 安装步骤
-
-```bash
-# 1. 克隆项目
-git clone <项目地址>
-cd lumi
-
-# 2. 安装依赖
-flutter pub get
-
-# 3. 生成代码
-dart run build_runner build
-
-# 4. 配置 API Key (重要!)
-cp lib/core/config/api_config.local.dart.example lib/core/config/api_config.local.dart
-# 编辑文件，填入你的 API Key
-
-# 5. 运行
-flutter run
-```
-
 ### API 配置
 
-推荐使用 DeepSeek API（便宜好用）：
+推荐使用 DeepSeek API（便宜好用）：https://platform.deepseek.com/usage
+支持 OpenAI 兼容格式的 API
 
-```dart
-// lib/core/config/api_config.local.dart
-class ApiConfig {
-  static const baseUrl = 'https://api.deepseek.com';
-  static const apiKey = 'sk-your-key-here';
-  static const model = 'deepseek-chat';
-}
-```
 ---
 
 ## 📁 项目结构
@@ -97,12 +69,6 @@ lumi/
 - **网络:** Dio
 - **渲染:** Live2D Cubism SDK
 - **AI:** DeepSeek / OpenAI API
-
----
-
-## 📝 License
-
-MIT License
 
 ---
 
