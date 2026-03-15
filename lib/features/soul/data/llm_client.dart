@@ -56,9 +56,26 @@ class LLMClient {
         requestData['top_p'] = topP;
       }
 
+      // 某些模型不支持 enable_search 参数，如果强制传递会导致 400 错误
+      // 这里可以根据模型名称做简单的黑/白名单过滤，或者干脆在这里先简单处理
+      final modelLower = _model.toLowerCase();
       if (enableSearch) {
-        requestData['enable_search'] = true;
-        requestData['search_options'] = {'forced_search': true};
+        // 白名单：Qwen, DeepSeek(百炼版), MiniMax 支持 enable_search
+        // 排除：GLM 已确认在百炼接口下不支持联网
+        final isSupported =
+            (modelLower.contains('qwen') ||
+             modelLower.contains('deepseek') ||
+             modelLower.contains('abab') ||
+             modelLower.contains('minimax')) &&
+            !modelLower.contains('glm');
+
+        if (isSupported) {
+          requestData['enable_search'] = true;
+          requestData['search_options'] = {'forced_search': true};
+          
+          // 如果是新版 Qwen 模型，理论上支持思考模式，但暂不开启以防 400
+          // if (modelLower.contains('qwen3')) { requestData['enable_thinking'] = true; }
+        }
       }
 
       AppLogger.d(
@@ -102,6 +119,23 @@ class LLMClient {
       AppLogger.d('LLM Response: $content');
       return content;
     } on DioException catch (e) {
+      // 触发了自动降级逻辑
+      if (enableSearch &&
+          e.response?.statusCode == 400 &&
+          e.response?.data.toString().contains('enable_search') == true) {
+        AppLogger.w(
+          'Detected unsupported enable_search, retrying without it...',
+        );
+        return chat(
+          systemPrompt: systemPrompt,
+          messages: messages,
+          temperature: temperature,
+          maxTokens: maxTokens,
+          topP: topP,
+          enableSearch: false, // 强制关闭再试一次！
+        );
+      }
+
       AppLogger.e('LLM DioError: ${e.type} - ${e.message}');
       if (e.response != null) {
         AppLogger.e(

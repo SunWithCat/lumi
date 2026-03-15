@@ -28,7 +28,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   int? _lastResolution;
   final ScrollController _scrollController = ScrollController();
 
-  // 🎀 固定配置值
+  // 固定配置值
   static const _minLive2DSpace = 280.0;
   static const _defaultChatHeight = 280.0;
   static const _minChatHeight = 200.0;
@@ -136,7 +136,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          0.0,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutCubic,
         );
@@ -373,10 +373,11 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
 
     return ListView.builder(
       controller: _scrollController,
+      reverse: true,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: chatState.messages.length,
       itemBuilder: (context, index) {
-        final msg = chatState.messages[index];
+        final msg = chatState.messages[chatState.messages.length - 1 - index];
         return RepaintBoundary(
           child: _MessageBubble(
             key: ValueKey(msg.id),
