@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/config/app_settings.dart';
 import 'package:lumi/core/theme/app_theme.dart';
@@ -132,9 +133,12 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
     );
   }
 
+  /// 仅在用户翻了历史消息时，平滑滚回底部
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
+      if (!_scrollController.hasClients) return;
+      // reverse 模式下 offset=0 就是最新消息，大于0说明翻了历史
+      if (_scrollController.offset > 1) {
         _scrollController.animateTo(
           0.0,
           duration: const Duration(milliseconds: 300),
@@ -154,7 +158,8 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
       if (prev?.currentEmotion != next.currentEmotion && _live2dInitialized) {
         _playEmotionMotion(next.currentEmotion);
       }
-      // 新消息时滚动到底部
+      // 新消息时，如果用户翻了历史就滚回底部
+      // 入场动画由 _MessageBubble 自身处理
       if (prev?.messages.length != next.messages.length) {
         _scrollToBottom();
       }
@@ -537,6 +542,7 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
+/// 消息气泡 - 使用 flutter_animate 实现入场动画
 class _MessageBubble extends StatelessWidget {
   final String text;
   final bool isUser;
@@ -551,10 +557,13 @@ class _MessageBubble extends StatelessWidget {
     required this.timestamp,
   });
 
+  /// 只有2秒内的新消息才播放入场动画
+  bool get _isNew => DateTime.now().difference(timestamp).inSeconds < 2;
+
   @override
   Widget build(BuildContext context) {
     final lumiColors = context.lumiColors;
-    return Align(
+    final bubble = Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Column(
         crossAxisAlignment: isUser
@@ -616,6 +625,29 @@ class _MessageBubble extends StatelessWidget {
         ],
       ),
     );
+
+    // 新消息：播放淡入 + 缩放 + 方向性滑入动画；历史消息：直接显示
+    if (_isNew) {
+      return bubble
+          .animate()
+          .fadeIn(
+            delay: 25.ms, // 等待 Layout 稳定，防止第一帧闪现
+            duration: 300.ms,
+          )
+          .scale(
+            begin: const Offset(0.8, 0.8),
+            duration: 400.ms,
+            curve: Curves.easeOutBack, // 带一点 Q 弹的感觉
+          )
+          .slide(
+            // 用户消息从右下飞入，AI 消息从左下飞入
+            begin: Offset(isUser ? 0.2 : -0.2, 0.2),
+            end: Offset.zero,
+            duration: 450.ms,
+            curve: Curves.easeOutCubic,
+          );
+    }
+    return bubble;
   }
 
   String _formatTime(DateTime time) {
