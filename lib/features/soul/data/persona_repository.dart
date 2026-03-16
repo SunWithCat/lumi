@@ -72,7 +72,7 @@ class PersonaRepository {
     );
   }
 
-  /// 从 systemPrompt 提取性格特点
+  /// 从 systemPrompt 提取性格特点 (仅对预设有意义，自定义直接返回)
   List<String> _extractTraits(String prompt) {
     final regex = RegExp(r'## 核心人格\n((?:- .+\n?)+)');
     final match = regex.firstMatch(prompt);
@@ -84,20 +84,20 @@ class PersonaRepository {
           .map((line) => line.substring(2).trim())
           .toList();
     }
-    return ['温柔体贴', '充满好奇'];
+    return ['自定义'];
   }
 
   /// 从 systemPrompt 提取说话风格
   String _extractSpeakingStyle(String prompt) {
-    if (prompt.contains('傲娇')) return '经常说"才不是呢"、"哼"，害羞时会结巴';
-    if (prompt.contains('元气')) return '语气活泼，经常用"！"，喜欢说"加油"';
-    return '语气温柔，偶尔使用颜文字';
+    if (prompt.contains('傲娇')) return '经常说“才不是呢”、“哼”';
+    if (prompt.contains('元气')) return '语气活泼，经常用“！”';
+    return '自定义语气';
   }
 
   /// 从 systemPrompt 提取用户称呼
   String _extractUserTitle(String prompt) {
-    final regex = RegExp(r'称呼用户为"([^"]+)"');
+    final regex = RegExp(r'称呼用户为“([^"]+)”');
     final match = regex.firstMatch(prompt);
-    return match?.group(1) ?? '主人';
+    return match?.group(1) ?? '你';
   }
 }

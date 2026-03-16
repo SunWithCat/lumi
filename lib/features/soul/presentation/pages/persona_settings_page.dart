@@ -442,7 +442,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
     final colorScheme = context.colorScheme;
     final nameController = TextEditingController(text: '');
     final bioController = TextEditingController(text: '');
-    final userTitleController = TextEditingController(text: '主人');
+    final promptController = TextEditingController(text: '');
     final errorNotifier = ValueNotifier<String?>(null);
 
     showModalBottomSheet(
@@ -506,17 +506,18 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                       const SizedBox(height: 16),
                       _buildTextField(
                         context,
-                        '简介',
+                        '一句话简介 (选填)',
                         bioController,
-                        maxLines: 3,
-                        hint: '描述角色的性格和背景',
+                        maxLines: 2,
+                        hint: '用于卡片展示（例如：一个高冷的御姐）',
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
                         context,
-                        '称呼用户为',
-                        userTitleController,
-                        hint: '例如：主人、哥哥、你',
+                        '完整高阶提示词 (必填)',
+                        promptController,
+                        maxLines: 8,
+                        hint: '在此赋予你的角色独一无二的灵魂吧 ✨ 填入你的专属人格提示词... ',
                       ),
                       const SizedBox(height: 24),
                     ],
@@ -571,10 +572,15 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                     onPressed: () {
                       final name = nameController.text.trim();
                       final bio = bioController.text.trim();
-                      final userTitle = userTitleController.text.trim();
+                      final promptText = promptController.text.trim();
 
                       if (name.isEmpty) {
                         errorNotifier.value = '请输入角色名字';
+                        return;
+                      }
+
+                      if (promptText.isEmpty) {
+                        errorNotifier.value = '提示词不能为空哦！';
                         return;
                       }
 
@@ -583,8 +589,8 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                           .read(personaProvider.notifier)
                           .createCustomPersona(
                             name: name,
-                            bio: bio.isNotEmpty ? bio : '一个可爱的AI伙伴',
-                            userTitle: userTitle.isNotEmpty ? userTitle : '主人',
+                            bio: bio.isNotEmpty ? bio : '自定义专属人格',
+                            customSystemPrompt: promptText,
                           );
                       Navigator.pop(ctx);
                       toastification.dismissAll();

@@ -104,23 +104,23 @@ class PersonaNotifier extends StateNotifier<AsyncValue<PersonaState>> {
   Future<void> createCustomPersona({
     required String name,
     required String bio,
-    required String userTitle,
+    required String customSystemPrompt,
   }) async {
     final current = state.valueOrNull?.current;
     if (current == null) return;
 
-    // 创建新的人格配置，不带 customSystemPrompt，强制根据属性生成
+    // 创建新的人格配置
     final newPersona = PersonaConfig(
       id: '', // 新人格，ID 由数据库生成
       name: name,
       age: current.age,
       bio: bio,
-      traits: current.traits,
-      speakingStyle: current.speakingStyle,
-      userTitle: userTitle,
+      traits: const ['自定义'],
+      speakingStyle: '自定义',
+      userTitle: '主人',
       baselineEmotion: current.baselineEmotion,
       emotionalSensitivity: current.emotionalSensitivity,
-      customSystemPrompt: null, // 清空，强制使用属性生成
+      customSystemPrompt: customSystemPrompt,
       isActive: false,
     );
 

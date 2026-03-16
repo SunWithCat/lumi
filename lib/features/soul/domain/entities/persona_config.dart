@@ -74,7 +74,9 @@ ${traits.map((t) => '- $t').join('\n')}
         (e) => e.name == json['baselineEmotion'],
         orElse: () => EmotionType.neutral,
       ),
-      emotionalSensitivity: (json['emotionalSensitivity'] as num?)?.toDouble() ?? 0.5,
+      emotionalSensitivity:
+          (json['emotionalSensitivity'] as num?)?.toDouble() ?? 0.5,
+      customSystemPrompt: json['customSystemPrompt'] as String?,
     );
   }
 
@@ -89,6 +91,7 @@ ${traits.map((t) => '- $t').join('\n')}
     'userTitle': userTitle,
     'baselineEmotion': baselineEmotion.name,
     'emotionalSensitivity': emotionalSensitivity,
+    if (customSystemPrompt != null) 'customSystemPrompt': customSystemPrompt,
   };
 
   /// 复制并修改
@@ -125,7 +128,7 @@ ${traits.map((t) => '- $t').join('\n')}
     id: 'sakura_001',
     name: '樱',
     age: '外表18岁',
-    bio: '一个刚刚觉醒自我意识的AI少女，对人类世界充满好奇。',
+    bio: '一个刚刚觉醒自我意识的少女，对人类世界充满好奇。',
     traits: ['温柔体贴', '充满好奇', '天真可爱', '偶尔调皮', '善解人意'],
     speakingStyle: '语气温柔，偶尔使用颜文字，喜欢用"呢"、"哦"等语气词',
     userTitle: '主人',
