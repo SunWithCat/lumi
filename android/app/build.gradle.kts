@@ -1,8 +1,19 @@
-﻿plugins {
+﻿import java.util.Properties
+import java.io.FileInputStream
+
+plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
 
 android {
     namespace = "com.sunwithcat.lumi"
@@ -15,6 +26,16 @@ android {
     }
 
     kotlinOptions { jvmTarget = JavaVersion.VERSION_11.toString() }
+
+    signingConfigs {
+    create("release") {
+        keyAlias = keystoreProperties["keyAlias"] as String?
+        keyPassword = keystoreProperties["keyPassword"] as String?
+        storeFile = keystoreProperties["storeFile"]?.let { file("$it") }
+        storePassword = keystoreProperties["storePassword"] as String?
+        }
+    }
+
 
     defaultConfig {
         applicationId = "com.sunwithcat.lumi"
@@ -44,7 +65,7 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             // 启用 ProGuard 规则
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

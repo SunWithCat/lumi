@@ -40,9 +40,9 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
             subtitle: 'Max Tokens: ${llm.maxTokens}',
             description: '控制回复的最大长度，越大回复越详细',
             value: llm.maxTokens.toDouble(),
-            min: 100,
+            min: 128,
             max: 4096,
-            divisions: 19,
+            divisions: 31,
             onChanged: (v) => ref
                 .read(appSettingsProvider.notifier)
                 .setLLMMaxTokens(v.round()),
@@ -86,8 +86,9 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
             min: 50,
             max: 1000,
             divisions: 19,
-            onChanged: (v) =>
-                ref.read(appSettingsProvider.notifier).setMaxContextMessages(v.round()),
+            onChanged: (v) => ref
+                .read(appSettingsProvider.notifier)
+                .setMaxContextMessages(v.round()),
             valueLabel: _getMaxContextMessagesLabel(llm.maxContextMessages),
           ),
           const SizedBox(height: 20),

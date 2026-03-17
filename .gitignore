@@ -57,9 +57,25 @@ app.*.map.json
 /android/app/src/main/cpp/CubismSdkForNative/
 
 # Live2D 模型资源 (版权原因，不上传)
-/assets/live2d/
-/android/app/src/main/assets/live2d/
+/android/app/src/main/assets/**/*
+!/android/app/src/main/assets/*.frag
+!/android/app/src/main/assets/*.vert
+
+# 排除本地生成的数据库 (防止隐私泄露)
+*.db
+*.db-journal
+*.sqlite
+
+# 排除用户本地生成的配置文件
+**/api_config.local.dart
+
 
 # 文档 (仅供本地学习使用)
 /docs/
 .kiro/
+.vscode/
+
+# 签名
+key.properties
+*.jks
+*.keystore

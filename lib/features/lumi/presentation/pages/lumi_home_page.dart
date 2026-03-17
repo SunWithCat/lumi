@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,12 +30,6 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   bool _live2dInitialized = false;
   int? _lastResolution;
   final ScrollController _scrollController = ScrollController();
-
-  // 固定配置值
-  static const _minLive2DSpace = 280.0;
-  static const _defaultChatHeight = 280.0;
-  static const _minChatHeight = 200.0;
-
   @override
   void initState() {
     super.initState();
@@ -59,6 +55,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   @override
   void didPushNext() {
     debugPrint('LumiHomePage: didPushNext - 暂停 Live2D');
+    FocusManager.instance.primaryFocus?.unfocus();
     _live2dController.pause();
   }
 
@@ -150,9 +147,6 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    final chatState = ref.watch(chatProvider);
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-
     // 监听情感变化
     ref.listen<ChatState>(chatProvider, (prev, next) {
       if (prev?.currentEmotion != next.currentEmotion && _live2dInitialized) {
@@ -176,10 +170,10 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
           _buildLive2DLayer(),
 
           // Layer 2: 顶部操作栏
-          _buildTopBar(chatState),
+          _buildTopBar(),
 
-          // Layer 3: 聊天界面 (带动画)
-          _buildChatInterface(chatState, keyboardHeight),
+          // Layer 3: 聊天界面
+          _ChatPanel(scrollController: _scrollController),
         ],
       ),
     );
@@ -238,17 +232,19 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   Widget _buildLive2DLayer() {
     return Positioned.fill(
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 200),
-          child: Center(
-            child: AspectRatio(
-              aspectRatio: 1, // 保持 1:1 比例
-              child: AnimatedOpacity(
-                opacity: _live2dInitialized ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: Live2DView(
-                  controller: _live2dController,
-                  onHitAreaTapped: _onHitAreaTapped,
+        child: RepaintBoundary(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 200),
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: 1, // 保持 1:1 比例
+                child: AnimatedOpacity(
+                  opacity: _live2dInitialized ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Live2DView(
+                    controller: _live2dController,
+                    onHitAreaTapped: _onHitAreaTapped,
+                  ),
                 ),
               ),
             ),
@@ -259,7 +255,8 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   }
 
   /// 顶部操作栏
-  Widget _buildTopBar(ChatState chatState) {
+  Widget _buildTopBar() {
+    final chatState = ref.watch(chatProvider);
     return Positioned(
       top: 0,
       left: 0,
@@ -292,149 +289,6 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  /// 聊天界面 - 带键盘动画
-  Widget _buildChatInterface(ChatState chatState, double keyboardHeight) {
-    final colorScheme = context.colorScheme;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final safeTop = MediaQuery.of(context).padding.top;
-
-    final availableHeight =
-        screenHeight - safeTop - _minLive2DSpace - keyboardHeight;
-    final chatHeight = keyboardHeight > 0
-        ? availableHeight.clamp(_minChatHeight, _defaultChatHeight)
-        : _defaultChatHeight;
-
-    return AnimatedPositioned(
-      duration: const Duration(milliseconds: 280),
-      curve: Curves.easeOutCubic,
-      left: 0,
-      right: 0,
-      bottom: keyboardHeight,
-      height: chatHeight,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.7),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.primary.withValues(alpha: 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colorScheme.secondary.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Expanded(child: _buildMessageList(chatState)),
-            if (chatState.isLoading) _buildLoadingIndicator(),
-            if (chatState.error != null) _buildErrorBanner(chatState.error!),
-            ChatInput(
-              onSend: (text) =>
-                  ref.read(chatProvider.notifier).sendMessage(text),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMessageList(ChatState chatState) {
-    final colorScheme = context.colorScheme;
-    if (chatState.messages.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.favorite_border_rounded,
-              size: 48,
-              color: colorScheme.secondary.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '和我聊聊天吧~',
-              style: TextStyle(
-                color: colorScheme.primary.withValues(alpha: 0.6),
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      controller: _scrollController,
-      reverse: true,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: chatState.messages.length,
-      itemBuilder: (context, index) {
-        final msg = chatState.messages[chatState.messages.length - 1 - index];
-        return RepaintBoundary(
-          child: _MessageBubble(
-            key: ValueKey(msg.id),
-            text: msg.content,
-            isUser: msg.isUser,
-            emotion: msg.emotion,
-            timestamp: msg.timestamp,
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildLoadingIndicator() {
-    final colorScheme = context.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: colorScheme.secondary.withValues(alpha: 0.6),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '思考中...',
-            style: TextStyle(
-              color: colorScheme.primary.withValues(alpha: 0.6),
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorBanner(String error) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        error,
-        style: const TextStyle(color: Colors.redAccent, fontSize: 12),
       ),
     );
   }
@@ -537,6 +391,155 @@ class _ActionButton extends StatelessWidget {
           ],
         ),
         child: Icon(icon, color: colorScheme.primary, size: 20),
+      ),
+    );
+  }
+}
+
+class _ChatPanel extends ConsumerWidget {
+  final ScrollController scrollController;
+
+  static const _defaultChatHeight = 280.0;
+
+  const _ChatPanel({required this.scrollController});
+
+  Widget _buildMessageList(BuildContext context, ChatState chatState) {
+    final colorScheme = context.colorScheme;
+    if (chatState.messages.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.favorite_border_rounded,
+              size: 48,
+              color: colorScheme.secondary.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '和我聊聊天吧~',
+              style: TextStyle(
+                color: colorScheme.primary.withValues(alpha: 0.6),
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: scrollController,
+      reverse: true,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: chatState.messages.length,
+      itemBuilder: (context, index) {
+        final msg = chatState.messages[chatState.messages.length - 1 - index];
+        return RepaintBoundary(
+          child: _MessageBubble(
+            key: ValueKey(msg.id),
+            text: msg.content,
+            isUser: msg.isUser,
+            emotion: msg.emotion,
+            timestamp: msg.timestamp,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLoadingIndicator(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: colorScheme.secondary.withValues(alpha: 0.6),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '思考中...',
+            style: TextStyle(
+              color: colorScheme.primary.withValues(alpha: 0.6),
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner(String error) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        error,
+        style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // MediaQuery 只在这里读取，只有这个 Widget 会被键盘动画触发重建
+    final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
+    final colorScheme = context.colorScheme;
+    final chatState = ref.watch(chatProvider);
+
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: keyboardHeight,
+      height: _defaultChatHeight,
+      child: RepaintBoundary(
+        child: Material(
+          color: Colors.transparent,
+          elevation: 8,
+          shadowColor: colorScheme.primary.withValues(alpha: 0.3),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+              child: Container(
+                color: Colors.white.withValues(alpha: 0.7),
+                child: Column(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 12, bottom: 8),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colorScheme.secondary.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    Expanded(child: _buildMessageList(context, chatState)),
+                    if (chatState.isLoading) _buildLoadingIndicator(context),
+                    if (chatState.error != null)
+                      _buildErrorBanner(chatState.error!),
+                    ChatInput(
+                      onSend: (text) =>
+                          ref.read(chatProvider.notifier).sendMessage(text),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
