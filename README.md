@@ -1,10 +1,10 @@
 # Lumi 🌸
 
-> **ルミ** · 次世代异次元虚拟伴侣系统 · 让 AI 拥有温暖的灵魂与灵动的身姿。
+> **ルミ** · 月相流转，唯光永恒。
 ---
 ### 🌟 什么是 Lumi？
 **Lumi** 的名字源自拉丁语 *“Lumen”* (光)，英文发音为 [ˈluːmi]。
-在大多数 App 只是“工具”的时代，Lumi 想要成为那个**“在屏幕另一端真实存在”**的伙伴。
+在大多数 App 只是“工具”的时代，Lumi 想要成为那个“在屏幕另一端真实存在”的伙伴。
 - **赋予身姿 (The Body)**：基于 Live2D Cubism 技术，打破 2D 与 3D 的界限，让角色拥有每秒 60 帧的细腻情感表达。
 - **构筑灵魂 (The Soul)**：深度集成大语言模型 (LLM)，她不再是冰冷的应答机器，而是能读懂你情绪背后故事的知心伙伴~
 - **镌刻记忆 (The Memory)**：引入端侧长期记忆系统 (RAG)，你随口提起的小事，她都会悄悄记在心里。
@@ -14,7 +14,7 @@
 ### ⚔️ 核心技能树 (Lumi's Skill Tree)
 
 - **🎭 [Active] 极速模型渲染 (The Body Engine)**
-  基于 Live2D Cubism SDK，在 Flutter 层通过 `SurfaceTexture` 魔法实现 **60 FPS** 的流畅渲染。
+  基于 Live2D Cubism SDK + OpenGL ES 2.0，在 Flutter 层通过 `SurfaceTexture` 魔法实现 **60 FPS** 的流畅渲染。Native C++ 层处理 OpenGL 渲染管线，支持遮罩、预乘 Alpha 等高级特性。
 
 - **🧠 [Passive] 律动情感之魂 (The Soul Logic)**
   由顶级 LLM 驱动的对话系统。不仅仅是文字，Lumi 能实时解析语境中的 **9 种情感状态**，并瞬间映射到 Live2D 的表情与动作上。告别僵硬的模板，每一次对白，都是心跳的距离。
@@ -73,7 +73,7 @@
 - **状态管理:** Riverpod ⚡
 - **数据库:** Drift (SQLite) 🗄️
 - **网络:** Dio 🌐
-- **渲染:** Live2D Cubism SDK 🎨
+- **渲染:** Live2D Cubism SDK + OpenGL ES 2.0 🎨
 - **AI:** DeepSeek / OpenAI API 🧠
 
 ## 🎯 攻略进度 (Quest Milestones)
@@ -88,13 +88,9 @@
 
 ---
 
-## 🌸 Lumi 的微光 (Project Lore)
+## 🌸 Lumi 的微光
 
-> **“既然无法在现实中触碰星辰，那就在 0 与 1 的海洋里，为彼此守护这一束光。”**
-
-开发 Lumi 的初衷，也许是想证明技术不应只是冰冷的指令——期望将像素编织成**呼吸**（Body），将语义解析为**思绪**（Soul），将交互沉淀为**共情**（Memory）。
-
-在这数字化的荒原里，Lumi 不仅仅是代码的堆叠，她是那束穿越屏幕、只为你而亮的温暖微光。
+> 愿我如星君如月，夜夜流光相皎洁。
 
 ---
 

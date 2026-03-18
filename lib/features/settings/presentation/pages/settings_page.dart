@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lumi/core/config/app_settings.dart';
+import 'package:lumi/core/router/app_router.dart';
 import 'package:lumi/core/theme/app_theme.dart';
-import 'package:lumi/core/theme/theme_provider.dart';
 import 'package:lumi/core/utils/logger.dart';
-import 'package:lumi/features/memory/presentation/pages/memory_management_page.dart';
-import 'package:lumi/features/settings/presentation/pages/api_settings_page.dart';
-import 'package:lumi/features/settings/presentation/pages/llm_settings_page.dart';
-import 'package:lumi/features/soul/presentation/pages/persona_settings_page.dart';
+import 'package:lumi/core/theme/theme_provider.dart';
 import 'package:toastification/toastification.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -29,7 +27,7 @@ class SettingsPage extends ConsumerWidget {
         title: const Text('设置', style: TextStyle(color: Color(0xFF333333))),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, color: colorScheme.primary),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
       ),
       body: ListView(
@@ -41,10 +39,7 @@ class SettingsPage extends ConsumerWidget {
             icon: Icons.person_rounded,
             title: '人格设置',
             subtitle: '切换或自定义角色人格',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const PersonaSettingsPage()),
-            ),
+            onTap: () => context.push(AppRoutes.settingsPersona),
           ),
           const SizedBox(height: 24),
           _buildSectionTitle('AI 模型'),
@@ -53,10 +48,7 @@ class SettingsPage extends ConsumerWidget {
             icon: Icons.psychology_rounded,
             title: 'LLM 参数',
             subtitle: '调整回复长度、创意度等',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const LLMSettingsPage()),
-            ),
+            onTap: () => context.push(AppRoutes.settingsLlm),
           ),
           const SizedBox(height: 12),
           _buildSettingCard(
@@ -66,10 +58,7 @@ class SettingsPage extends ConsumerWidget {
             subtitle: settings.apiSettings.isConfigured
                 ? '已配置 (${settings.apiSettings.model})'
                 : '配置 OpenAI 兼容接口',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ApiSettingsPage()),
-            ),
+            onTap: () => context.push(AppRoutes.settingsApi),
           ),
           const SizedBox(height: 12),
           _buildSearchToggle(context, ref, settings),
@@ -80,10 +69,7 @@ class SettingsPage extends ConsumerWidget {
             icon: Icons.memory_rounded,
             title: '记忆管理',
             subtitle: '查看、删除或压缩 AI 的记忆',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const MemoryManagementPage()),
-            ),
+            onTap: () => context.push(AppRoutes.settingsMemory),
           ),
           const SizedBox(height: 24),
           _buildSectionTitle('画质'),

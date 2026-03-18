@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/config/app_settings.dart';
 import 'package:lumi/core/theme/app_theme.dart';
@@ -73,7 +74,7 @@ class _ApiSettingsPageState extends ConsumerState<ApiSettingsPage> {
               if (_hasChanges) {
                 _showDiscardDialog();
               } else {
-                Navigator.pop(context);
+                context.pop();
               }
             },
             icon: Icon(Icons.arrow_back_ios, color: colorScheme.primary),
@@ -161,7 +162,7 @@ class _ApiSettingsPageState extends ConsumerState<ApiSettingsPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              Navigator.pop(context);
+              context.pop();
             },
             child: Text('放弃', style: TextStyle(color: colorScheme.primary)),
           ),
@@ -236,7 +237,7 @@ class _ApiSettingsPageState extends ConsumerState<ApiSettingsPage> {
     );
 
     // 返回上一页
-    Navigator.pop(context);
+    context.pop();
   }
 
   Widget _buildTextField({

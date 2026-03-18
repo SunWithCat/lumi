@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/theme/app_theme.dart';
 import 'package:lumi/features/soul/domain/entities/persona_config.dart';
@@ -28,7 +29,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
         title: const Text('人格设置', style: TextStyle(color: Color(0xFF333333))),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, color: colorScheme.primary),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
       ),
       body: personaAsync.when(

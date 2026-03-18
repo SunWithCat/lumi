@@ -1,16 +1,18 @@
 import 'dart:ui';
 
+import 'package:go_router/go_router.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/config/app_settings.dart';
+import 'package:lumi/core/router/app_router.dart';
 import 'package:lumi/core/theme/app_theme.dart';
 import 'package:lumi/features/body/domain/emotion_motion_mapper.dart';
 import 'package:lumi/features/body/presentation/controllers/live2d_controller.dart';
 import 'package:lumi/features/body/presentation/providers/live2d_provider.dart';
 import 'package:lumi/features/body/presentation/widgets/live2d_view.dart';
 import 'package:lumi/features/chat/presentation/widgets/chat_input.dart';
-import 'package:lumi/features/settings/presentation/pages/settings_page.dart';
 import 'package:lumi/features/soul/domain/entities/emotion.dart';
 import 'package:lumi/features/soul/presentation/providers/chat_provider.dart';
 
@@ -76,6 +78,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
       _live2dController.resume();
     }
   }
+
 
   /// 用新分辨率重建 Live2D
   Future<void> _reinitWithNewResolution(int resolution) async {
@@ -169,8 +172,8 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
           // Layer 1: Live2D 固定全屏
           _buildLive2DLayer(),
 
-          // Layer 2: 顶部操作栏
-          _buildTopBar(),
+          // Layer 2: 顶部操作栏 - 独立 Widget，自己管理数据订阅
+          const _TopBar(),
 
           // Layer 3: 聊天界面
           _ChatPanel(scrollController: _scrollController),
@@ -253,10 +256,16 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
       ),
     );
   }
+}
 
-  /// 顶部操作栏
-  Widget _buildTopBar() {
+/// 避免触发父级 LumiHomePage 重建
+class _TopBar extends ConsumerWidget {
+  const _TopBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final chatState = ref.watch(chatProvider);
+
     return Positioned(
       top: 0,
       left: 0,
@@ -272,17 +281,12 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
                 children: [
                   _ActionButton(
                     icon: Icons.settings_rounded,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const SettingsPage()),
-                      );
-                    },
+                    onTap: () => context.push(AppRoutes.settings),
                   ),
                   const SizedBox(width: 8),
                   _ActionButton(
                     icon: Icons.refresh_rounded,
-                    onTap: () => _showClearDialog(context),
+                    onTap: () => _showClearDialog(context, ref),
                   ),
                 ],
               ),
@@ -293,7 +297,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
     );
   }
 
-  void _showClearDialog(BuildContext context) {
+  void _showClearDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -324,8 +328,6 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
     );
   }
 }
-
-// ============ 小组件 ============
 
 class _EmotionIndicator extends StatelessWidget {
   final EmotionType emotion;
@@ -403,7 +405,11 @@ class _ChatPanel extends ConsumerWidget {
 
   const _ChatPanel({required this.scrollController});
 
-  Widget _buildMessageList(BuildContext context, ChatState chatState) {
+  Widget _buildMessageList(
+    BuildContext context,
+    ChatState chatState,
+    double maxBubbleWidth,
+  ) {
     final colorScheme = context.colorScheme;
     if (chatState.messages.isEmpty) {
       return Center(
@@ -442,6 +448,7 @@ class _ChatPanel extends ConsumerWidget {
             isUser: msg.isUser,
             emotion: msg.emotion,
             timestamp: msg.timestamp,
+            maxWidth: maxBubbleWidth,
           ),
         );
       },
@@ -497,6 +504,7 @@ class _ChatPanel extends ConsumerWidget {
     final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
     final colorScheme = context.colorScheme;
     final chatState = ref.watch(chatProvider);
+    final maxBubbleWidth = MediaQuery.sizeOf(context).width * 0.75;
 
     return Positioned(
       left: 0,
@@ -526,7 +534,13 @@ class _ChatPanel extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    Expanded(child: _buildMessageList(context, chatState)),
+                    Expanded(
+                      child: _buildMessageList(
+                        context,
+                        chatState,
+                        maxBubbleWidth,
+                      ),
+                    ),
                     if (chatState.isLoading) _buildLoadingIndicator(context),
                     if (chatState.error != null)
                       _buildErrorBanner(chatState.error!),
@@ -551,6 +565,7 @@ class _MessageBubble extends StatelessWidget {
   final bool isUser;
   final EmotionType? emotion;
   final DateTime timestamp;
+  final double maxWidth;
 
   const _MessageBubble({
     super.key,
@@ -558,6 +573,7 @@ class _MessageBubble extends StatelessWidget {
     required this.isUser,
     this.emotion,
     required this.timestamp,
+    required this.maxWidth,
   });
 
   /// 只有2秒内的新消息才播放入场动画
@@ -576,9 +592,7 @@ class _MessageBubble extends StatelessWidget {
           Container(
             margin: const EdgeInsets.only(bottom: 4),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.75,
-            ),
+            constraints: BoxConstraints(maxWidth: maxWidth),
             decoration: BoxDecoration(
               gradient: isUser
                   ? LinearGradient(

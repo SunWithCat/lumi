@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/theme/app_theme.dart';
 import 'package:lumi/features/memory/domain/memory_compactor.dart';
@@ -201,7 +202,7 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
         title: const Text('记忆管理', style: TextStyle(color: Color(0xFF333333))),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, color: colorScheme.primary),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         actions: [
           PopupMenuButton<String>(
