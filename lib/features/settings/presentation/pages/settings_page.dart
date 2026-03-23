@@ -210,7 +210,7 @@ class SettingsPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '测试中，部分模型可用',
+                  '部分模型可用',
                   style: TextStyle(fontSize: 13, color: Colors.grey[500]),
                 ),
               ],

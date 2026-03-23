@@ -341,7 +341,7 @@ void Live2DModel::SetupTextures(AAssetManager* assetManager, const std::string& 
         g_javaVM->DetachCurrentThread();
     }
     
-    // 设置预乘 alpha（我们在上面已经预乘了）
+    // 设置预乘 alpha
     GetRenderer<Rendering::CubismRenderer_OpenGLES2>()->IsPremultipliedAlpha(true);
     LOGI("SetupTextures complete");
 }
