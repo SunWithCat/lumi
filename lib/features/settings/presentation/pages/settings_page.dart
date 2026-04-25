@@ -6,6 +6,7 @@ import 'package:lumi/core/router/app_router.dart';
 import 'package:lumi/core/theme/app_theme.dart';
 import 'package:lumi/core/utils/logger.dart';
 import 'package:lumi/core/theme/theme_provider.dart';
+import 'package:lumi/features/auth/presentation/providers/auth_provider.dart';
 import 'package:toastification/toastification.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -79,6 +80,53 @@ class SettingsPage extends ConsumerWidget {
           const SizedBox(height: 24),
           _buildSectionTitle('主题'),
           _buildThemeSelector(context, ref),
+          const SizedBox(height: 32),
+          // 退出登录按钮
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: OutlinedButton.icon(
+              onPressed: () => _handleLogout(context, ref),
+              icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+              label: const Text(
+                '退出登录',
+                style: TextStyle(color: Colors.redAccent),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.redAccent, width: 1.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 48),
+        ],
+      ),
+    );
+  }
+
+  void _handleLogout(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('退出登录'),
+        content: const Text('确定要退出当前账号吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await ref.read(authProvider.notifier).logout();
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx);
+              if (!context.mounted) return;
+              context.go(AppRoutes.login);
+            },
+            child: const Text('确定', style: TextStyle(color: Colors.redAccent)),
+          ),
         ],
       ),
     );
@@ -421,11 +469,11 @@ class SettingsPage extends ConsumerWidget {
       title: Text('分辨率已切换为${quality.label}'),
       type: ToastificationType.success,
       style: ToastificationStyle.flat,
-      primaryColor: colorScheme.primary, // ← 用主题色替换默认的绿色！
+      primaryColor: colorScheme.primary,
       icon: Icon(Icons.check_circle_rounded, color: colorScheme.primary),
       autoCloseDuration: const Duration(seconds: 2),
       alignment: Alignment.bottomCenter,
-      showProgressBar: false, // 关掉底部的进度条也可以更清爽
+      showProgressBar: false,
     );
   }
 }

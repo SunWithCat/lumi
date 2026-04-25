@@ -79,7 +79,6 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
     }
   }
 
-
   /// 用新分辨率重建 Live2D
   Future<void> _reinitWithNewResolution(int resolution) async {
     setState(() => _live2dInitialized = false);
@@ -159,6 +158,40 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
       // 入场动画由 _MessageBubble 自身处理
       if (prev?.messages.length != next.messages.length) {
         _scrollToBottom();
+      }
+      // Key未配置时，弹窗引导
+      if (next.error == 'API_KEY_NOT_CONFIGURED' &&
+          prev?.error != 'API_KEY_NOT_CONFIGURED') {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Text('还没配置 API Key哦~'),
+              content: const Text(
+                '需要先在设置页面填写 API Key，快去配置一下吧，不然我没法陪你聊天呢~(≧ω≦)',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('再想想'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    context.push(AppRoutes.settingsApi); // 跳转到设置
+                  },
+                  child: const Text('去配置'),
+                ),
+              ],
+            ),
+          );
+        });
       }
     });
 

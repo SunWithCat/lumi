@@ -45,12 +45,25 @@ class AppSettings extends Table {
   Set<Column> get primaryKey => {key};
 }
 
-@DriftDatabase(tables: [Conversations, Memories, Personas, AppSettings])
+/// 用户表
+class Users extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get username => text().withLength(min: 1, max: 20)();
+  TextColumn get passwordHash => text()();
+  TextColumn get gender => text().withDefault(const Constant('未设置'))();
+  DateTimeColumn get birthday => dateTime().nullable()();
+  TextColumn get bio => text().withDefault(const Constant(''))();
+  TextColumn get avatarPath => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get lastLoginAt => dateTime().nullable()();
+}
+
+@DriftDatabase(tables: [Conversations, Memories, Personas, AppSettings, Users])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -66,6 +79,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.createTable(appSettings);
+      }
+      if (from < 4) {
+        await m.createTable(users);
       }
     },
   );
@@ -276,6 +292,79 @@ class AppDatabase extends _$AppDatabase {
     await into(appSettings).insertOnConflictUpdate(
       AppSettingsCompanion.insert(key: key, value: value),
     );
+  }
+
+  /// 删除设置值
+  Future<void> deleteSetting(String key) async {
+    await (delete(appSettings)..where((t) => t.key.equals(key))).go();
+  }
+
+  /// 注册新用户
+  Future<int> createUser({
+    required String username,
+    required String passwordHash,
+    String gender = '未设置',
+    DateTime? birthday,
+    String bio = '',
+  }) async {
+    return into(users).insert(
+      UsersCompanion.insert(
+        username: username,
+        passwordHash: passwordHash,
+        gender: Value(gender),
+        birthday: Value(birthday),
+        bio: Value(bio),
+        createdAt: DateTime.now(),
+        lastLoginAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  /// 验证用户登录
+  Future<User?> validateUser(String username, String passwordHash) async {
+    return (select(users)..where(
+          (t) =>
+              t.username.equals(username) & t.passwordHash.equals(passwordHash),
+        ))
+        .getSingleOrNull();
+  }
+
+  /// 更新最后登录时间
+  Future<void> updateLastLogin(int userId) async {
+    await (update(users)..where((t) => t.id.equals(userId))).write(
+      UsersCompanion(lastLoginAt: Value(DateTime.now())),
+    );
+  }
+
+  /// 获取用户信息
+  Future<User?> getUser(int userId) async {
+    return (select(users)..where((t) => t.id.equals(userId))).getSingleOrNull();
+  }
+
+  /// 更新用户资料
+  Future<void> updateUserProfile(
+    int userId, {
+    String? username,
+    String? gender,
+    DateTime? birthday,
+    String? bio,
+  }) async {
+    await (update(users)..where((t) => t.id.equals(userId))).write(
+      UsersCompanion(
+        username: username != null ? Value(username) : const Value.absent(),
+        gender: gender != null ? Value(gender) : const Value.absent(),
+        birthday: birthday != null ? Value(birthday) : const Value.absent(),
+        bio: bio != null ? Value(bio) : const Value.absent(),
+      ),
+    );
+  }
+
+  /// 检查是否有注册用户
+  Future<bool> hasRegisteredUser() async {
+    final count = await (selectOnly(users)..addColumns([users.id.count()]))
+        .map((row) => row.read(users.id.count()))
+        .getSingle();
+    return (count ?? 0) > 0;
   }
 }
 

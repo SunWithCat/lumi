@@ -238,16 +238,22 @@ class ChatNotifier extends StateNotifier<ChatState> {
         emotion = parsed.emotion;
       } else {
         // 模拟响应
-        await Future.delayed(const Duration(milliseconds: 800));
-        final mockResponses = [
-          ('主人好呀~ 今天过得怎么样？(≧▽≦)', EmotionType.happy),
-          ('嗯嗯，我在听呢~ 继续说吧！', EmotionType.curious),
-          ('主人说的好有趣哦！', EmotionType.happy),
-        ];
-        final mock =
-            mockResponses[state.messages.length % mockResponses.length];
-        responseText = mock.$1;
-        emotion = mock.$2;
+        // await Future.delayed(const Duration(milliseconds: 800));
+        // final mockResponses = [
+        //   ('主人好呀~ 今天过得怎么样？(≧▽≦)', EmotionType.happy),
+        //   ('嗯嗯，我在听呢~ 继续说吧！', EmotionType.curious),
+        //   ('主人说的好有趣哦！', EmotionType.happy),
+        // ];
+        // final mock =
+        //     mockResponses[state.messages.length % mockResponses.length];
+        // responseText = mock.$1;
+        // emotion = mock.$2;
+        // API Key未配置，返回错误信息
+        state = state.copyWith(
+          isLoading: false,
+          error: 'API_KEY_NOT_CONFIGURED',
+        );
+        return; // 提前结束
       }
 
       // 添加 AI 回复
