@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/features/memory/data/database/app_database.dart';
 import 'package:lumi/features/memory/presentation/providers/memory_provider.dart';
 
-/// 认证状态
+// 认证状态
 class AuthState {
   final bool isLoggedIn;
   final User? currentUser;
@@ -16,19 +16,19 @@ class AuthState {
     this.isLoading = true,
   });
 
-  AuthState copyWith({bool? isLoggedIn, User? currentUser, bool? isLoading}) {
-    return AuthState(
-      isLoggedIn: isLoggedIn ?? this.isLoggedIn,
-      currentUser: currentUser ?? this.currentUser,
-      isLoading: isLoading ?? this.isLoading,
-    );
-  }
+  // AuthState copyWith({bool? isLoggedIn, User? currentUser, bool? isLoading}) {
+  //   return AuthState(
+  //     isLoggedIn: isLoggedIn ?? this.isLoggedIn,
+  //     currentUser: currentUser ?? this.currentUser,
+  //     isLoading: isLoading ?? this.isLoading,
+  //   );
+  // }
 }
 
-/// 当前登录用户ID的设置键
+// 当前登录用户ID的设置键
 const _kCurrentUserIdKey = 'current_user_id';
 
-/// 认证管理器
+// 认证管理器
 class AuthNotifier extends StateNotifier<AuthState> {
   final AppDatabase _db;
 
@@ -36,7 +36,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _checkLoginState();
   }
 
-  /// 检查是否有已注册用户及登录会话（启动时调用）
+  // 检查是否有已注册用户及登录会话（启动时调用）
   Future<void> _checkLoginState() async {
     final hasUser = await _db.hasRegisteredUser();
     if (!hasUser) {
@@ -67,13 +67,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = const AuthState(isLoggedIn: false, isLoading: false);
   }
 
-  /// 密码哈希（SHA-256）
+  // 密码哈希
   String _hashPassword(String password) {
     final bytes = utf8.encode(password);
     return sha256.convert(bytes).toString();
   }
 
-  /// 注册
+  // 注册
   Future<String?> register(String username, String password) async {
     if (username.trim().isEmpty) return '请输入用户名';
     if (password.length < 4) return '密码至少4位';
@@ -98,7 +98,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// 登录
+  // 登录
   Future<String?> login(String username, String password) async {
     if (username.trim().isEmpty) return '请输入用户名';
     if (password.isEmpty) return '请输入密码';
@@ -114,18 +114,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
     return null; // 成功返回 null
   }
 
-  /// 退出登录
+  // 退出登录
   Future<void> logout() async {
     // 清除保存的登录会话
     await _db.deleteSetting(_kCurrentUserIdKey);
     state = const AuthState(isLoggedIn: false, isLoading: false);
   }
 
-  /// 是否有注册用户
+  // 是否有注册用户
   Future<bool> hasUser() => _db.hasRegisteredUser();
 }
 
-/// Provider
+// Provider
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final db = ref.watch(databaseProvider);
   return AuthNotifier(db);

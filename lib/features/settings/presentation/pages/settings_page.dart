@@ -109,26 +109,53 @@ class SettingsPage extends ConsumerWidget {
   void _handleLogout(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('退出登录'),
-        content: const Text('确定要退出当前账号吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () async {
-              await ref.read(authProvider.notifier).logout();
-              if (!ctx.mounted) return;
-              Navigator.pop(ctx);
-              if (!context.mounted) return;
-              context.go(AppRoutes.login);
-            },
-            child: const Text('确定', style: TextStyle(color: Colors.redAccent)),
-          ),
-        ],
-      ),
+      barrierDismissible: false,
+      builder: (ctx) {
+        bool isLoading = false;
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            return AlertDialog(
+              title: const Text('退出登录'),
+              content: isLoading
+                  ? const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 16),
+                        Text('正在退出登录...'),
+                      ],
+                    )
+                  : const Text('确定要退出登录吗？'),
+              actions: isLoading
+                  ? null
+                  : [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('取消'),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          setState(() => isLoading = true);
+                          await ref.read(authProvider.notifier).logout();
+                          if (!ctx.mounted) return;
+                          Navigator.pop(ctx);
+                          if (!context.mounted) return;
+                          context.go(AppRoutes.login);
+                        },
+                        child: const Text(
+                          '确定',
+                          style: TextStyle(color: Colors.redAccent),
+                        ),
+                      ),
+                    ],
+            );
+          },
+        );
+      },
     );
   }
 

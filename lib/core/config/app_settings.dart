@@ -23,7 +23,7 @@ class ApiSettings {
   const ApiSettings({
     this.baseUrl = 'https://api.deepseek.com/v1',
     this.apiKey = '',
-    this.model = 'deepseek-chat',
+    this.model = 'deepseek-v4-flash',
   });
 
   bool get isConfigured => apiKey.isNotEmpty;
@@ -41,9 +41,11 @@ class ApiSettings {
 class LLMSettings {
   final double temperature; // 0.0-2.0, 越高越随机
   final int maxTokens; // 最大输出 token 数
-  final double topP; // 0.0-1.0, nucleus sampling
+  final double topP; // 0.0-1.0
   final bool enableSearch;
   final int maxContextMessages; // 上下文消息数量限制
+  final bool enableThinking; // DeepSeek-V4-Flash 专属思考模式
+  final String reasoningEffort; // DeepSeek-V4-Flash 专属思考强度
 
   const LLMSettings({
     this.temperature = 0.7,
@@ -51,6 +53,8 @@ class LLMSettings {
     this.topP = 1.0,
     this.enableSearch = false,
     this.maxContextMessages = 300,
+    this.enableThinking = true,
+    this.reasoningEffort = 'high',
   });
 
   LLMSettings copyWith({
@@ -59,6 +63,8 @@ class LLMSettings {
     double? topP,
     bool? enableSearch,
     int? maxContextMessages,
+    bool? enableThinking,
+    String? reasoningEffort,
   }) {
     return LLMSettings(
       temperature: temperature ?? this.temperature,
@@ -66,6 +72,8 @@ class LLMSettings {
       topP: topP ?? this.topP,
       enableSearch: enableSearch ?? this.enableSearch,
       maxContextMessages: maxContextMessages ?? this.maxContextMessages,
+      enableThinking: enableThinking ?? this.enableThinking,
+      reasoningEffort: reasoningEffort ?? this.reasoningEffort,
     );
   }
 }
@@ -106,6 +114,8 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
   static const _keyApiModel = 'api_model';
   static const _keyEnableSearch = 'enable_search';
   static const _keyMaxContextMessages = 'max_context_messages';
+  static const _keyEnableThinking = 'enable_thinking';
+  static const _keyReasoningEffort = 'reasoning_effort';
 
   final AppDatabase _db;
   late final Future<void> _loadFuture;
@@ -124,6 +134,8 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     final apiKeyStr = await _db.getSetting(_keyApiKey);
     final modelStr = await _db.getSetting(_keyApiModel);
     final maxContextMessagesStr = await _db.getSetting(_keyMaxContextMessages);
+    final enableThinkingStr = await _db.getSetting(_keyEnableThinking);
+    final reasoningEffortStr = await _db.getSetting(_keyReasoningEffort);
 
     RenderQuality quality = RenderQuality.medium;
     if (qualityStr != null) {
@@ -137,12 +149,14 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
       topP: double.tryParse(topPStr ?? '') ?? 1.0,
       enableSearch: bool.tryParse(enableSearch ?? '') ?? false,
       maxContextMessages: int.tryParse(maxContextMessagesStr ?? '') ?? 300,
+      enableThinking: bool.tryParse(enableThinkingStr ?? '') ?? true,
+      reasoningEffort: reasoningEffortStr ?? 'high',
     );
 
     final apiSettings = ApiSettings(
       baseUrl: baseUrlStr ?? 'https://api.deepseek.com/v1',
       apiKey: apiKeyStr ?? '',
-      model: modelStr ?? 'deepseek-chat',
+      model: modelStr ?? 'deepseek-v4-flash',
     );
 
     state = AppSettingsState(
@@ -196,6 +210,22 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
       llmSettings: state.llmSettings.copyWith(enableSearch: value),
     );
     await _db.setSetting(_keyEnableSearch, value.toString());
+  }
+
+  // 设置思考模式
+  Future<void> setEnableThinking(bool value) async {
+    state = state.copyWith(
+      llmSettings: state.llmSettings.copyWith(enableThinking: value),
+    );
+    await _db.setSetting(_keyEnableThinking, value.toString());
+  }
+
+  // 设置思考强度
+  Future<void> setReasoningEffort(String effort) async {
+    state = state.copyWith(
+      llmSettings: state.llmSettings.copyWith(reasoningEffort: effort),
+    );
+    await _db.setSetting(_keyReasoningEffort, effort);
   }
 
   /// 设置上下文消息数量限制

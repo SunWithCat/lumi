@@ -115,11 +115,11 @@ class _ApiSettingsPageState extends ConsumerState<ApiSettingsPage> {
               const SizedBox(height: 16),
               _buildTextField(
                 label: '模型 ID',
-                hint: 'deepseek-chat',
+                hint: 'deepseek-v4-flash',
                 controller: _modelController,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _saveSettings(),
-                helperText: '例如: deepseek-v3.2, glm-4.7',
+                helperText: '例如: deepseek-v4-flash, glm-5.1',
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -216,7 +216,7 @@ class _ApiSettingsPageState extends ConsumerState<ApiSettingsPage> {
     final newSettings = ApiSettings(
       baseUrl: baseUrl.isEmpty ? 'https://api.deepseek.com/v1' : baseUrl,
       apiKey: _apiKeyController.text.trim(),
-      model: model.isEmpty ? 'deepseek-chat' : model,
+      model: model.isEmpty ? 'deepseek-v4-flash' : model,
     );
     ref.read(appSettingsProvider.notifier).updateApiSettings(newSettings);
 

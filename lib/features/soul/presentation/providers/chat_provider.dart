@@ -231,6 +231,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
           maxTokens: _llmSettings.maxTokens,
           topP: _llmSettings.topP,
           enableSearch: _llmSettings.enableSearch,
+          enableThinking: _llmSettings.enableThinking,
+          reasoningEffort: _llmSettings.reasoningEffort,
         );
 
         final parsed = ResponseParser.parse(response);

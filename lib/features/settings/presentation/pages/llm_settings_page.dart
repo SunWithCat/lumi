@@ -92,6 +92,8 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                 .setMaxContextMessages(v.round()),
             valueLabel: _getMaxContextMessagesLabel(llm.maxContextMessages),
           ),
+          const SizedBox(height: 16),
+          _buildThinkingToggle(context, llm),
           const SizedBox(height: 20),
           _buildPresetButtons(context),
         ],
@@ -214,6 +216,159 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildThinkingToggle(BuildContext context, LLMSettings llm) {
+    final colorScheme = context.colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: colorScheme.secondary.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.psychology_rounded,
+                  color: colorScheme.primary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '深度思考',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF333333),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '开启后模型会先思考再回答噢~',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ),
+              Transform.scale(
+                scale: 0.85,
+                child: Switch(
+                  value: llm.enableThinking,
+                  activeColor: colorScheme.primary,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  onChanged: (v) {
+                    ref.read(appSettingsProvider.notifier).setEnableThinking(v);
+                  },
+                ),
+              ),
+            ],
+          ),
+          // 思维强度选择
+          if (llm.enableThinking) ...[
+            const Divider(height: 24),
+            _buildEffortSelector(context, llm.reasoningEffort),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEffortSelector(BuildContext context, String currentEffort) {
+    final colorScheme = context.colorScheme;
+    final efforts = [
+      ('high', '高', Icons.speed_rounded),
+      ('max', '最高', Icons.rocket_launch_rounded),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('思考强度', style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+        const SizedBox(height: 10),
+        Row(
+          children: efforts.map((e) {
+            final (value, label, icon) = e;
+            final isSelected = currentEffort == value;
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: value == 'high' ? 6 : 0,
+                  left: value == 'max' ? 6 : 0,
+                ),
+                child: GestureDetector(
+                  onTap: () {
+                    ref
+                        .read(appSettingsProvider.notifier)
+                        .setReasoningEffort(value);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? colorScheme.primary.withValues(alpha: 0.1)
+                          : Colors.grey[50],
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected
+                            ? colorScheme.primary
+                            : Colors.grey[200]!,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          icon,
+                          size: 18,
+                          color: isSelected
+                              ? colorScheme.primary
+                              : Colors.grey[400],
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            color: isSelected
+                                ? colorScheme.primary
+                                : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
