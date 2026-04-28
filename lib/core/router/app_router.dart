@@ -1,5 +1,4 @@
 import 'package:go_router/go_router.dart';
-import 'package:lumi/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lumi/features/auth/presentation/pages/login_page.dart';
 import 'package:lumi/features/auth/presentation/pages/register_page.dart';
 import 'package:lumi/features/lumi/presentation/pages/lumi_home_page.dart';
@@ -20,7 +19,7 @@ abstract class AppRoutes {
   static const settingsMemory = '/settings/memory';
 }
 
-GoRouter createAppRouter(AuthState authState) {
+GoRouter createAppRouter(bool Function() isLoggedIn) {
   return GoRouter(
     initialLocation: AppRoutes.home,
     observers: [LumiHomePage.routeObserver],
@@ -29,11 +28,13 @@ GoRouter createAppRouter(AuthState authState) {
           state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.register;
 
-      if (!authState.isLoggedIn && !goingToAuth) {
+      final loggedIn = isLoggedIn();
+
+      if (!loggedIn && !goingToAuth) {
         return AppRoutes.login;
       }
 
-      if (authState.isLoggedIn && goingToAuth) {
+      if (loggedIn && goingToAuth) {
         return AppRoutes.home;
       }
 

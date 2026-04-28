@@ -246,7 +246,7 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  Icons.psychology_rounded,
+                  Icons.tips_and_updates_rounded,
                   color: colorScheme.primary,
                   size: 22,
                 ),
@@ -260,7 +260,7 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                       '深度思考',
                       style: TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                         color: Color(0xFF333333),
                       ),
                     ),
@@ -286,89 +286,102 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
             ],
           ),
           // 思维强度选择
-          if (llm.enableThinking) ...[
-            const Divider(height: 24),
-            _buildEffortSelector(context, llm.reasoningEffort),
-          ],
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            child: llm.enableThinking
+                ? Column(
+                    children: [
+                      Divider(height: 24, color: Colors.grey[200]),
+                      _buildEffortSelector(context, llm.reasoningEffort),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildEffortSelector(BuildContext context, String currentEffort) {
-    final colorScheme = context.colorScheme;
-    final efforts = [
-      ('high', '高', Icons.speed_rounded),
-      ('max', '最高', Icons.rocket_launch_rounded),
-    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('思考强度', style: TextStyle(fontSize: 13, color: Colors.grey[600])),
         const SizedBox(height: 10),
         Row(
-          children: efforts.map((e) {
-            final (value, label, icon) = e;
-            final isSelected = currentEffort == value;
-            return Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  right: value == 'high' ? 6 : 0,
-                  left: value == 'max' ? 6 : 0,
-                ),
-                child: GestureDetector(
-                  onTap: () {
-                    ref
-                        .read(appSettingsProvider.notifier)
-                        .setReasoningEffort(value);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? colorScheme.primary.withValues(alpha: 0.1)
-                          : Colors.grey[50],
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSelected
-                            ? colorScheme.primary
-                            : Colors.grey[200]!,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          icon,
-                          size: 18,
-                          color: isSelected
-                              ? colorScheme.primary
-                              : Colors.grey[400],
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                            color: isSelected
-                                ? colorScheme.primary
-                                : Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+          children: [
+            Expanded(
+              child: _buildEffortOption(
+                context,
+                'high',
+                '高',
+                Icons.speed_rounded,
+                currentEffort,
               ),
-            );
-          }).toList(),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildEffortOption(
+                context,
+                'max',
+                '最高',
+                Icons.rocket_launch_rounded,
+                currentEffort,
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  Widget _buildEffortOption(
+    BuildContext context,
+    String value,
+    String label,
+    IconData icon,
+    String currentEffort,
+  ) {
+    final colorScheme = context.colorScheme;
+    final isSelected = currentEffort == value;
+    return GestureDetector(
+      onTap: () {
+        ref.read(appSettingsProvider.notifier).setReasoningEffort(value);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? colorScheme.primary.withValues(alpha: 0.1)
+              : Colors.grey[50],
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? colorScheme.primary : Colors.grey[200]!,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? colorScheme.primary : Colors.grey[400],
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: isSelected ? colorScheme.primary : Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -418,9 +431,10 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
     final colorScheme = context.colorScheme;
     return GestureDetector(
       onTap: () {
+        final current = ref.read(appSettingsProvider).llmSettings;
         final notifier = ref.read(appSettingsProvider.notifier);
         notifier.updateLLMSettings(
-          LLMSettings(maxTokens: maxTokens, temperature: temp, topP: topP),
+          current.copyWith(maxTokens: maxTokens, temperature: temp, topP: topP),
         );
         toastification.dismissAll();
         toastification.show(
