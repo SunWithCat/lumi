@@ -95,6 +95,13 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   }
 
   Future<void> _initLive2D() async {
+    // 如果是重登，跳过等待设置加载完成
+    if (_live2dController.isInitialized && _live2dController.isModelLoaded) {
+      _lastResolution = ref.read(appSettingsProvider).renderQuality.resolution;
+      await _live2dController.resume();
+      setState(() => _live2dInitialized = true);
+      return;
+    }
     // 等待设置加载完成
     final settings = await ref.read(appSettingsProvider.notifier).waitForLoad();
     final resolution = settings.renderQuality.resolution;
@@ -108,6 +115,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
         'hiyori_pro_zh/runtime/hiyori_pro_t11.model3.json',
       );
       _lastResolution = resolution;
+      await _live2dController.resume(); // 解除可能残留的暂停状态
       setState(() => _live2dInitialized = true);
     }
   }
