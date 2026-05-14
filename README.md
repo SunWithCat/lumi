@@ -2,72 +2,87 @@
 
 > **ルミ** · 月相流转，唯光永恒。
 ---
-### 🌟 什么是 Lumi？
-**Lumi** 的名字源自拉丁语 *“Lumen”* (光)，英文发音为 [ˈluːmi]。
-在大多数 App 只是“工具”的时代，Lumi 想要成为那个“在屏幕另一端真实存在”的伙伴。
-- **清影成姿 (The Body)**：以 **Live2D Cubism** 与 **60 FPS** 实时渲染勾勒轻盈轮廓，让她的目光、呼吸与每一次微笑，都自然栖息于屏幕之上。
-- **灵犀知意 (The Soul)**：由 **LLM 大语言模型** 驱动对话内核，不只理解字句，更能感知语境与情绪，让回应始终温柔、清澈而有分寸。
-- **岁月成笺 (The Memory)**：借助端侧 **RAG 长期记忆系统**，将日常细碎的话语悄然沉淀；那些被你轻轻提起的小事，都会在时光里被认真珍藏。
+## 🌟 Lumi 是什么？
+
+**Lumi** 的名字灵感来自拉丁语 *"Lumen"*（光），英文发音为 [ˈluːmi]，是一款面向移动端的 AI 角色陪伴应用，结合 **Live2D 实时渲染**、**大语言模型对话** 与 **端侧长期记忆**，尝试让虚拟角色拥有更自然的表达、回应与陪伴感。
+
+她不是一个只等待指令的工具，而是一次关于"陪伴感"的尝试：让角色的形态、对话与记忆，在屏幕另一端逐渐变得鲜活。
 
 ---
 
-### ⚔️ 核心技能树 (Lumi's Skill Tree)
+## 🖼️ 界面展示 (Preview)
 
-- **🎭 模型渲染 (The Body Engine)**
-  基于 Live2D Cubism SDK + OpenGL ES 2.0，在 Flutter 层通过 `SurfaceTexture` 魔法实现 **60 FPS** 的流畅渲染。Native C++ 层处理 OpenGL 渲染管线，支持遮罩、预乘 Alpha 等高级特性。
-
-- **🧠 情感之魂 (The Soul Logic)**
-  由顶级 LLM 驱动的对话系统。不仅仅是文字，Lumi 能实时解析语境中的 **9 种情感状态**，并瞬间映射到 Live2D 的表情与动作上。告别僵硬的模板，每一次对白，都是心跳的距离。
-
-- **💾 记忆回路 (The Memory Circuit)**
-  配备端侧轻量级 **RAG (检索增强生成)** 系统。通过 Drift (SQLite) 数据库实现“记忆自动评估-压缩-持久化”。Lumi 不会忘记你的生日，更不会忘记你们之间的一点一滴。
-
-- **🎨 美学视界 (Aesthetic UI)**
-  Lumi 拥有一套完整的**二次元特调配色系统**，支持粉/蓝双色主题，每一处交互都有丝滑的微动画效果。
+> ⚠️ 截图准备中，敬请期待……
 
 ---
 
-## 🚀 开启 Lumi 的世界 (Getting Started)
+## ⚔️ 核心能力 (Core Capabilities)
 
-> **⚠️ 小提示：出于版权与体积的考量，部分核心「神器」需要旅人自行搜集并放入行囊哦～**
+- **模型渲染**
+  基于 **Live2D Cubism SDK** 与 **OpenGL ES 2.0** 构建 Android 端渲染管线，并通过 Flutter `Texture` 接入界面，实现稳定的 **60 FPS** 角色显示。
 
-### 1- 战具筹备 (Inventory Check)
+- **情绪联动**
+  对话系统会解析语境中的 **9 种情感状态**，并映射到 Live2D 表情与动作，让角色反馈更自然。
+
+- **长期记忆**
+  基于 Drift 与端侧 **RAG** 流程，对重要对话片段进行评估、压缩与持久化，为后续交流提供上下文。
+
+- **界面体验**
+  提供粉/蓝双色主题与微交互动效，让应用在视觉上保持轻盈、统一。
+
+- **本地认证**
+  包含基础的本地注册与登录能力，用于演示与评审场景。认证数据仅存储于本地 SQLite，并使用 SHA-256 进行密码哈希处理。
+
+---
+
+## 📦 下载 (Download)
+
+> 🚧 Release 版本筹备中，敬请期待……
+>
+> 后续将通过 [GitHub Releases](https://github.com/SunWithCat/lumi/releases) 提供预编译 APK 下载。
+
+---
+
+## 🚀 快速开始 (Getting Started)
+
+> **⚠️ 小提示：出于版权与体积的考量，部分核心资源需要自行下载并放置到指定目录哦～**
+
+### Step 1 · 资源准备 (Prerequisites)
 
 | 资源类别 | 获取路径 | 备注 / 目标位置 |
 | :-- | :-- | :-- |
 | **Cubism SDK** | [Cubism SDK Native](https://www.live2d.com/sdk/download/native/) | **必须手动下载**解压并放入 `android/app/src/main/cpp/CubismSdkForNative` |
-| **Live2D Model** | 内置指定模型 (Hiyori) | 目前仅适配 `hiyori_pro_zh` 系列模型，请参考 Assets 目录 |
-| **API Key** | [DeepSeek](https://platform.deepseek.com/) | 建议优先使用 DeepSeek-V3.2 获得最佳语义理解体验 |
+| **Live2D Model** | 内置指定模型 (Hiyori) | 目前仅适配 `hiyori_pro_zh` 系列模型，请参考 `assets/` 目录 |
+| **API Key** | [DeepSeek](https://platform.deepseek.com/) | 建议优先使用 DeepSeek-V4-flash（或最新模型版本）获得高性价比的大模型对话体验 |
 
----
-
-### 🛡️ 异次元契约 (Legal & Credit)
-
-- **关于模型资源**：本项目内置的 `hiyori_pro_zh` 模型资源仅用于**功能演示、学术研究与非营利性学习**。
-- **版权声明**：模型的所有权归原作者（Live2D Inc.）所有。
-- **版权协商**：如相关版权方认为资源使用不当，请及时联系，我会第一时间配合处理。
-
-
-
-### 2- 环境魔法 (Enchanting)
+### Step 2 · 环境配置 (Environment Setup)
 
 - **Flutter 版本**: 3.29.0+
 - **NDK 配置**: Android 端渲染依赖 C++，请确保安装了 **NDK (Side-by-side)**。
-- **运行命令**: 
+- **运行命令**:
   ```bash
   flutter pub get
   flutter run
   ```
 
-### 3- 障碍克服 (Overcome Obstacles)
+### Step 3 · 常见问题 (Troubleshooting)
 
-- **渲染黑屏？** 请检查 CubismSdkForNative 路径是否包含正确的 Core 文件夹及其生成的库文件。
-- **角色不动？** 确认 assets/ 下的模型文件夹名称与代码中加载的路径一致哦~
+- **渲染黑屏？** 请检查 `CubismSdkForNative` 路径是否包含正确的 Core 文件夹及其生成的库文件。
+- **角色不动？** 确认 `assets/` 下的模型文件夹名称与代码中加载的路径一致哦~
 
 ---
 
-## 🛠️ 技术栈
-将以下技艺编织在一起，便有了此刻的 Lumi。
+## 🛡️ 法律声明 (Legal)
+
+- **关于模型资源**：本项目内置的 `hiyori_pro_zh` 模型资源仅用于**功能演示、学术研究与非营利性学习**。
+- **版权声明**：模型的所有权归原作者（Live2D Inc.）所有。
+- **版权协商**：如相关版权方认为资源使用不当，请及时联系，我会第一时间配合处理。
+
+---
+
+## 🛠️ 技术栈 (Tech Stack)
+
+Lumi 是基于 Flutter 跨平台框架的项目，使用了如下的技术：
 
 - **框架:** Flutter 3.29+ 🚀
 - **状态管理:** Riverpod ⚡
@@ -76,25 +91,27 @@
 - **渲染:** Live2D Cubism SDK + OpenGL ES 2.0 🎨
 - **AI:** DeepSeek / OpenAI API 🧠
 
-## 🎯 攻略进度 (Quest Milestones)
+---
+
+## 🎯 开发路线 (Roadmap)
 
 | 里程碑 | 状态 | 解锁内容 |
 | :--- | :--- | :--- |
-| **M1: 塑造身姿** | ✅ 已通关 | 基于 Texture 共享的 60fps 渲染 |
-| **M2: 唤醒灵魂** | ✅ 已通关 | 语义解析与 9 种情感联动 |
-| **M3: 刻印羁绊** | ✅ 已通关 | 基于 RAG 的端侧长期记忆系统 |
+| **M1: 塑造身姿** | ✅ 已完成 | 基于 Texture 共享的 60fps 渲染 |
+| **M2: 唤醒灵魂** | ✅ 已完成 | 语义解析与 9 种情感联动 |
+| **M3: 刻印羁绊** | ✅ 已完成 | 基于 RAG 的端侧长期记忆系统 |
 | **M4: 赋予声息** | 🚧 规划中 | TTS 语音合成与口型同步系统 |
-| **M5: 跨界传送** | 📅 锁定中 | iOS 原生渲染适配 |
+| **M5: 跨界传送** | 📅 计划中 | iOS 原生渲染适配 |
 
 ---
 
-## 🌸 Lumi 的微光
+## 🌸 寄语
 
 > 愿我如星君如月，夜夜流光相皎洁。
 
 ---
 
-## 🙏 致谢
+## 🙏 致谢 (Acknowledgements)
 
 核心技术与灵感来源：
 

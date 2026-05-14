@@ -13,6 +13,7 @@ import 'package:lumi/features/body/presentation/controllers/live2d_controller.da
 import 'package:lumi/features/body/presentation/providers/live2d_provider.dart';
 import 'package:lumi/features/body/presentation/widgets/live2d_view.dart';
 import 'package:lumi/features/chat/presentation/widgets/chat_input.dart';
+import 'package:lumi/features/soul/domain/entities/chat_message.dart';
 import 'package:lumi/features/soul/domain/entities/emotion.dart';
 import 'package:lumi/features/soul/presentation/providers/chat_provider.dart';
 
@@ -276,18 +277,21 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   Widget _buildLive2DLayer() {
     return Positioned.fill(
       child: SafeArea(
-        child: RepaintBoundary(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 200),
-            child: Center(
-              child: AspectRatio(
-                aspectRatio: 1, // 保持 1:1 比例
-                child: AnimatedOpacity(
-                  opacity: _live2dInitialized ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 300),
-                  child: Live2DView(
-                    controller: _live2dController,
-                    onHitAreaTapped: _onHitAreaTapped,
+        // 斩杀语义
+        child: ExcludeSemantics(
+          child: RepaintBoundary(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 200),
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: 1, // 保持 1:1 比例
+                  child: AnimatedOpacity(
+                    opacity: _live2dInitialized ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: Live2DView(
+                      controller: _live2dController,
+                      onHitAreaTapped: _onHitAreaTapped,
+                    ),
                   ),
                 ),
               ),
@@ -305,7 +309,9 @@ class _TopBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final chatState = ref.watch(chatProvider);
+    final emotion = ref.watch(
+      chatProvider.select((state) => state.currentEmotion),
+    );
 
     return Positioned(
       top: 0,
@@ -317,7 +323,7 @@ class _TopBar extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _EmotionIndicator(emotion: chatState.currentEmotion),
+              _EmotionIndicator(emotion: emotion),
               Row(
                 children: [
                   _ActionButton(
@@ -448,11 +454,11 @@ class _ChatPanel extends ConsumerWidget {
 
   Widget _buildMessageList(
     BuildContext context,
-    ChatState chatState,
+    List<ChatMessage> messages,
     double maxBubbleWidth,
   ) {
     final colorScheme = context.colorScheme;
-    if (chatState.messages.isEmpty) {
+    if (messages.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -479,9 +485,9 @@ class _ChatPanel extends ConsumerWidget {
       controller: scrollController,
       reverse: true,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: chatState.messages.length,
+      itemCount: messages.length,
       itemBuilder: (context, index) {
-        final msg = chatState.messages[chatState.messages.length - 1 - index];
+        final msg = messages[messages.length - 1 - index];
         return RepaintBoundary(
           child: _MessageBubble(
             key: ValueKey(msg.id),
@@ -544,7 +550,11 @@ class _ChatPanel extends ConsumerWidget {
     // MediaQuery 只在这里读取，只有这个 Widget 会被键盘动画触发重建
     final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
     final colorScheme = context.colorScheme;
-    final chatState = ref.watch(chatProvider);
+    final messages = ref.watch(chatProvider.select((state) => state.messages));
+    final isLoading = ref.watch(
+      chatProvider.select((state) => state.isLoading),
+    );
+    final error = ref.watch(chatProvider.select((state) => state.error));
     final maxBubbleWidth = MediaQuery.sizeOf(context).width * 0.75;
 
     return Positioned(
@@ -578,13 +588,12 @@ class _ChatPanel extends ConsumerWidget {
                     Expanded(
                       child: _buildMessageList(
                         context,
-                        chatState,
+                        messages,
                         maxBubbleWidth,
                       ),
                     ),
-                    if (chatState.isLoading) _buildLoadingIndicator(context),
-                    if (chatState.error != null)
-                      _buildErrorBanner(chatState.error!),
+                    if (isLoading) _buildLoadingIndicator(context),
+                    if (error != null) _buildErrorBanner(error),
                     ChatInput(
                       onSend: (text) =>
                           ref.read(chatProvider.notifier).sendMessage(text),

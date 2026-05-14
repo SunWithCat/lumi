@@ -51,6 +51,18 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final _uuid = const Uuid();
   final ContextManager _contextManager;
   final _memoryEvaluator = MemoryEvaluator();
+  static const _emotionTag = '''
+    ## 输出格式硬性要求：情感标签
+    每次回复的最后必须附加一个情绪标签，格式只能是以下之一：
+    [Happy] [Sad] [Angry] [Surprised] [Shy] [Curious] [Neutral] [Loving] [Worried]
+
+    规则：
+    - 情绪标签必须放在整条回复的最后。
+    - 不要解释标签含义。
+    - 不要输出多个情绪标签。
+    - 不要使用列表外的标签。
+    - 如果情绪不明显，使用 [Neutral]。
+    ''';
 
   ChatNotifier({
     LLMClient? llmClient,
@@ -76,6 +88,23 @@ class ChatNotifier extends StateNotifier<ChatState> {
     if (history.isNotEmpty) {
       state = state.copyWith(messages: history);
     }
+  }
+
+  String _hasEmotionTag(String prompt) {
+    final lower = prompt.toLowerCase();
+    final hasEmotion =
+        lower.contains('[happy]') &&
+        lower.contains('[sad]') &&
+        lower.contains('[neutral]');
+    if (hasEmotion) {
+      return prompt.trim();
+    }
+    return '''
+      ${prompt.trim()}
+
+      $_emotionTag
+      '''
+        .trim();
   }
 
   /// 发送消息
@@ -213,10 +242,12 @@ class ChatNotifier extends StateNotifier<ChatState> {
           'Context: ${context.includedMessageCount}/${context.totalMessageCount} messages, hasMemories: ${context.hasMemories}, timeIngo: $timeInfo',
         );
 
+        final personaPrompt = _hasEmotionTag(_persona.systemPrompt);
+
         // 构建增强的系统提示（叠加时间信息）
         final enhancedPrompt =
             '''
-            ${_persona.systemPrompt.trim()}
+            $personaPrompt
 
             ## 当前时间与对话状态
             ${timeInfo.toString()}
