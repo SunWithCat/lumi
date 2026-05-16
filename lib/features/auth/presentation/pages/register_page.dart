@@ -47,11 +47,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         autoCloseDuration: const Duration(seconds: 2),
         alignment: Alignment.bottomCenter,
         margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Colors.black26,
+            color: context.lumiColors.shadowColor.withValues(alpha: 0.15),
             blurRadius: 16,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       );
@@ -80,11 +80,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         autoCloseDuration: const Duration(seconds: 2),
         alignment: Alignment.bottomCenter,
         margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Colors.black26,
+            color: context.lumiColors.shadowColor.withValues(alpha: 0.15),
             blurRadius: 16,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       );
@@ -117,29 +117,25 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 children: [
                   // Logo 区域
                   Container(
-                    width: 100,
-                    height: 100,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          context.lumiColors.primaryGradientStart,
-                          context.lumiColors.primaryGradientEnd,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
                           color: context.lumiColors.primaryGradientStart
-                              .withValues(alpha: 0.4),
+                              .withValues(alpha: 0.25),
                           blurRadius: 20,
-                          offset: const Offset(0, 8),
+                          offset: const Offset(0, 10),
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.person_add_rounded,
-                      color: Colors.white,
-                      size: 48,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Image.asset(
+                        'assets/lumi_icon.png',
+                        width: 84,
+                        height: 84,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -149,12 +145,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: context.colorScheme.primary,
+                      letterSpacing: 2,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     '开始你的专属伴侣之旅',
-                    style: TextStyle(fontSize: 15, color: Colors.grey[500]),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: context.lumiColors.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                   const SizedBox(height: 40),
 
@@ -177,7 +178,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         _obscurePassword
                             ? Icons.visibility_off_rounded
                             : Icons.visibility_rounded,
-                        color: Colors.grey[400],
+                        color: context.lumiColors.textSecondary.withValues(alpha: 0.5),
                         size: 20,
                       ),
                       onPressed: () =>
@@ -189,7 +190,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   // 确认密码
                   _buildTextField(
                     controller: _confirmController,
-                    icon: Icons.lock_rounded,
+                    icon: Icons.lock_outline_rounded,
                     hint: '确认密码',
                     obscure: true,
                   ),
@@ -203,21 +204,19 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       onPressed: _isLoading ? null : _handleRegister,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.colorScheme.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: context.colorScheme.onPrimary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 4,
-                        shadowColor: context.colorScheme.primary.withValues(
-                          alpha: 0.4,
-                        ),
+                        shadowColor: context.lumiColors.shadowColor.withValues(alpha: 0.5),
                       ),
                       child: _isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: context.colorScheme.onPrimary,
                                 strokeWidth: 2,
                               ),
                             )
@@ -226,6 +225,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
+                                letterSpacing: 1.5,
                               ),
                             ),
                     ),
@@ -238,7 +238,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     child: Text.rich(
                       TextSpan(
                         text: '已有账号？',
-                        style: TextStyle(color: Colors.grey[500]),
+                        style: TextStyle(color: context.lumiColors.textSecondary),
                         children: [
                           TextSpan(
                             text: '立即登录',
@@ -269,7 +269,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -286,7 +286,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           prefixIcon: Icon(icon, color: context.colorScheme.primary, size: 22),
           suffixIcon: suffix,
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey[400]),
+          hintStyle: TextStyle(
+            color: context.lumiColors.textSecondary.withValues(alpha: 0.4),
+          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,

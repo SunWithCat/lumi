@@ -87,29 +87,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 children: [
                   // Logo 区域
                   Container(
-                    width: 100,
-                    height: 100,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          context.lumiColors.primaryGradientStart,
-                          context.lumiColors.primaryGradientEnd,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
                           color: context.lumiColors.primaryGradientStart
-                              .withValues(alpha: 0.4),
+                              .withValues(alpha: 0.25),
                           blurRadius: 20,
-                          offset: const Offset(0, 8),
+                          offset: const Offset(0, 10),
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.favorite_rounded,
-                      color: Colors.white,
-                      size: 48,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Image.asset(
+                        'assets/lumi_icon.png',
+                        width: 84,
+                        height: 84,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -119,7 +115,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: context.colorScheme.primary,
-                      letterSpacing: 2,
+                      letterSpacing: 3,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -128,6 +124,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     style: TextStyle(
                       fontSize: 16,
                       color: context.lumiColors.textSecondary,
+                      letterSpacing: 0.5,
                     ),
                   ),
                   const SizedBox(height: 48),
@@ -151,7 +148,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         _obscurePassword
                             ? Icons.visibility_off_rounded
                             : Icons.visibility_rounded,
-                        color: context.lumiColors.textSecondary,
+                        color: context.lumiColors.textSecondary.withValues(alpha: 0.5),
                         size: 20,
                       ),
                       onPressed: () =>
@@ -173,7 +170,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 4,
-                        shadowColor: context.lumiColors.shadowColor,
+                        shadowColor: context.lumiColors.shadowColor.withValues(alpha: 0.5),
                       ),
                       child: _isLoading
                           ? SizedBox(
@@ -189,6 +186,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
+                                letterSpacing: 1.5,
                               ),
                             ),
                     ),

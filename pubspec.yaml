@@ -49,6 +49,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
   
   # 代码生成
   build_runner: ^2.4.13
@@ -59,3 +60,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/lumi_icon.png
+
+flutter_launcher_icons:
+  android: "launcher_icon" # 自动生成 Android 图标
+  ios: true                # 自动生成 iOS 图标
+  image_path: "assets/lumi_icon.png" # 刚才存放的图片路径
