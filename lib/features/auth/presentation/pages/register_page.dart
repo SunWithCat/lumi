@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumi/core/router/app_router.dart';
 import 'package:lumi/core/theme/app_theme.dart';
+import 'package:lumi/core/utils/url_launcher_utils.dart';
 import 'package:lumi/features/auth/presentation/providers/auth_provider.dart';
 import 'package:toastification/toastification.dart';
 
@@ -249,6 +251,35 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           ),
                         ],
                       ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: () {
+                      UrlLauncherUtils.launchWebUrl(
+                        "https://github.com/SunWithCat/lumi",
+                      );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        FaIcon(
+                          FontAwesomeIcons.github,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Lumi 开源地址',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.lumiColors.textSecondary.withValues(
+                              alpha: 0.6,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

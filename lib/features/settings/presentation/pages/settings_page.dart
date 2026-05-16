@@ -6,8 +6,10 @@ import 'package:lumi/core/router/app_router.dart';
 import 'package:lumi/core/theme/app_theme.dart';
 import 'package:lumi/core/utils/logger.dart';
 import 'package:lumi/core/theme/theme_provider.dart';
+import 'package:lumi/core/utils/url_launcher_utils.dart';
 import 'package:lumi/features/auth/presentation/providers/auth_provider.dart';
 import 'package:toastification/toastification.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -80,6 +82,31 @@ class SettingsPage extends ConsumerWidget {
           const SizedBox(height: 24),
           _buildSectionTitle('主题'),
           _buildThemeSelector(context, ref),
+          const SizedBox(height: 24),
+          _buildSectionTitle('关于'),
+          _buildSettingCard(
+            context: context,
+            iconWidget: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: context.colorScheme.secondary.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: FaIcon(
+                  FontAwesomeIcons.github,
+                  color: colorScheme.primary,
+                  size: 20,
+                ),
+              ),
+            ),
+            title: 'GitHub 开源仓库',
+            subtitle: '查看源码或反馈问题',
+            onTap: () => UrlLauncherUtils.launchWebUrl(
+              "https://github.com/SunWithCat/lumi",
+            ),
+          ),
           const SizedBox(height: 32),
           // 退出登录按钮
           SizedBox(
@@ -175,7 +202,8 @@ class SettingsPage extends ConsumerWidget {
 
   Widget _buildSettingCard({
     required BuildContext context,
-    required IconData icon,
+    IconData? icon,
+    Widget? iconWidget,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
@@ -198,15 +226,16 @@ class SettingsPage extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: colorScheme.secondary.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: colorScheme.primary, size: 22),
-            ),
+            iconWidget ??
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: colorScheme.secondary.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: colorScheme.primary, size: 22),
+                ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumi/core/router/app_router.dart';
 import 'package:lumi/core/theme/app_theme.dart';
+import 'package:lumi/core/utils/url_launcher_utils.dart';
 import 'package:lumi/features/auth/presentation/providers/auth_provider.dart';
 import 'package:toastification/toastification.dart';
 
@@ -148,7 +150,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         _obscurePassword
                             ? Icons.visibility_off_rounded
                             : Icons.visibility_rounded,
-                        color: context.lumiColors.textSecondary.withValues(alpha: 0.5),
+                        color: context.lumiColors.textSecondary.withValues(
+                          alpha: 0.5,
+                        ),
                         size: 20,
                       ),
                       onPressed: () =>
@@ -170,7 +174,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 4,
-                        shadowColor: context.lumiColors.shadowColor.withValues(alpha: 0.5),
+                        shadowColor: context.lumiColors.shadowColor.withValues(
+                          alpha: 0.5,
+                        ),
                       ),
                       child: _isLoading
                           ? SizedBox(
@@ -212,6 +218,35 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ],
                       ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: () {
+                      UrlLauncherUtils.launchWebUrl(
+                        "https://github.com/SunWithCat/lumi",
+                      );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        FaIcon(
+                          FontAwesomeIcons.github,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Lumi 开源地址',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.lumiColors.textSecondary.withValues(
+                              alpha: 0.6,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
