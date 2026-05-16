@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:lumi/core/config/app_settings.dart';
@@ -13,18 +15,61 @@ import 'package:lumi/features/soul/domain/entities/emotion.dart';
 import 'package:lumi/features/soul/domain/entities/persona_config.dart';
 import 'package:lumi/features/soul/presentation/providers/persona_provider.dart';
 
-/// 聊天状态
+class ChatUsageMetrics {
+  final int totalMessages;
+  final int totalUserMessages;
+  final int totalAssistantMessages;
+  final int totalConversationTokens;
+  final int includedContextMessages;
+  final int maxContextMessages;
+  final int estimatedRequestTokens;
+  final int? lastPromptTokens;
+  final int? lastCompletionTokens;
+  final int? lastTotalTokens;
+  final int contextWindowTokens;
+  final int maxOutputTokens;
+  final String modelName;
+
+  const ChatUsageMetrics({
+    this.totalMessages = 0,
+    this.totalUserMessages = 0,
+    this.totalAssistantMessages = 0,
+    this.totalConversationTokens = 0,
+    this.includedContextMessages = 0,
+    this.maxContextMessages = 0,
+    this.estimatedRequestTokens = 0,
+    this.lastPromptTokens,
+    this.lastCompletionTokens,
+    this.lastTotalTokens,
+    this.contextWindowTokens = 0,
+    this.maxOutputTokens = 0,
+    this.modelName = '',
+  });
+
+  int get latestRequestTokens => lastTotalTokens ?? estimatedRequestTokens;
+
+  double get contextUsageRatio {
+    if (contextWindowTokens <= 0 || estimatedRequestTokens <= 0) return 0;
+    return (estimatedRequestTokens / contextWindowTokens)
+        .clamp(0, 1)
+        .toDouble();
+  }
+}
+
+// 聊天状态
 class ChatState {
   final List<ChatMessage> messages;
   final bool isLoading;
   final EmotionType currentEmotion;
   final String? error;
+  final ChatUsageMetrics metrics;
 
   const ChatState({
     this.messages = const [],
     this.isLoading = false,
     this.currentEmotion = EmotionType.neutral,
     this.error,
+    this.metrics = const ChatUsageMetrics(),
   });
 
   ChatState copyWith({
@@ -32,22 +77,25 @@ class ChatState {
     bool? isLoading,
     EmotionType? currentEmotion,
     String? error,
+    ChatUsageMetrics? metrics,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
       isLoading: isLoading ?? this.isLoading,
       currentEmotion: currentEmotion ?? this.currentEmotion,
       error: error,
+      metrics: metrics ?? this.metrics,
     );
   }
 }
 
-/// 聊天 Provider
 class ChatNotifier extends StateNotifier<ChatState> {
   final LLMClient? _llmClient;
   final MemoryRepository? _memoryRepo;
   final PersonaConfig _persona;
   final LLMSettings _llmSettings;
+  final String _modelName;
+  final int _contextWindowTokens;
   final _uuid = const Uuid();
   final ContextManager _contextManager;
   final _memoryEvaluator = MemoryEvaluator();
@@ -69,25 +117,95 @@ class ChatNotifier extends StateNotifier<ChatState> {
     MemoryRepository? memoryRepo,
     PersonaConfig persona = PersonaConfig.defaultPersona,
     LLMSettings llmSettings = const LLMSettings(),
+    String modelName = '',
   }) : _llmClient = llmClient,
        _memoryRepo = memoryRepo,
        _persona = persona,
        _llmSettings = llmSettings,
+       _modelName = modelName,
+       _contextWindowTokens = llmSettings.contextWindowTokens,
        _contextManager = ContextManager(
          maxContextMessages: llmSettings.maxContextMessages,
        ),
        super(const ChatState());
 
-  /// 初始化：加载历史对话
+  // 初始化：加载历史对话
   Future<void> loadHistory() async {
     if (_memoryRepo == null) return;
 
     final history = await _memoryRepo.getConversationHistory(
       limit: _contextManager.maxContextMessages,
     );
-    if (history.isNotEmpty) {
-      state = state.copyWith(messages: history);
+
+    if (state.messages.isNotEmpty || state.isLoading) {
+      return;
     }
+
+    final conversationsTokens = _estimateConversationTokens(history);
+    final systemOverhead =
+        _contextManager.estimateTokens(_persona.systemPrompt) + 12;
+
+    state = state.copyWith(
+      messages: history,
+      metrics: _buildMetrics(
+        history,
+        estimatedRequestTokens: conversationsTokens + systemOverhead,
+      ),
+    );
+  }
+
+  ChatUsageMetrics _buildMetrics(
+    List<ChatMessage> messages, {
+    int? includedContextMessages,
+    int? estimatedRequestTokens,
+    int? lastPromptTokens,
+    int? lastCompletionTokens,
+    int? lastTotalTokens,
+  }) {
+    final totalMessages = messages.length;
+    final totalUserMessages = messages
+        .where((message) => message.isUser)
+        .length;
+    final conversationTokensOnly = _estimateConversationTokens(messages);
+    final totalConversationTokens =
+        estimatedRequestTokens ?? conversationTokensOnly;
+
+    return ChatUsageMetrics(
+      totalMessages: totalMessages,
+      totalUserMessages: totalUserMessages,
+      totalAssistantMessages: totalMessages - totalUserMessages,
+      totalConversationTokens: totalConversationTokens,
+      includedContextMessages:
+          includedContextMessages ??
+          math.min(totalMessages, _llmSettings.maxContextMessages),
+      maxContextMessages: _llmSettings.maxContextMessages,
+      estimatedRequestTokens: estimatedRequestTokens ?? totalConversationTokens,
+      lastPromptTokens: lastPromptTokens,
+      lastCompletionTokens: lastCompletionTokens,
+      lastTotalTokens: lastTotalTokens,
+      contextWindowTokens: _contextWindowTokens,
+      maxOutputTokens: _llmSettings.maxTokens,
+      modelName: _modelName,
+    );
+  }
+
+  int _estimateConversationTokens(List<ChatMessage> messages) {
+    var total = 0;
+    for (final message in messages) {
+      total += _contextManager.estimateTokens(message.content) + 6;
+    }
+    return total;
+  }
+
+  int _estimateRequestTokens(
+    String systemPrompt,
+    List<Map<String, String>> messages,
+  ) {
+    var total = _contextManager.estimateTokens(systemPrompt) + 12;
+    for (final message in messages) {
+      total += _contextManager.estimateTokens(message['content'] ?? '') + 6;
+    }
+    return total;
   }
 
   String _hasEmotionTag(String prompt) {
@@ -107,7 +225,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
         .trim();
   }
 
-  /// 发送消息
+  // 发送消息
   Future<void> sendMessage(String content) async {
     if (content.trim().isEmpty) return;
 
@@ -119,10 +237,12 @@ class ChatNotifier extends StateNotifier<ChatState> {
       timestamp: DateTime.now(),
     );
 
+    final pendingMessages = [...state.messages, userMessage];
     state = state.copyWith(
-      messages: [...state.messages, userMessage],
+      messages: pendingMessages,
       isLoading: true,
       error: null,
+      metrics: _buildMetrics(pendingMessages),
     );
 
     // 保存到数据库
@@ -131,6 +251,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
     try {
       String responseText;
       EmotionType emotion;
+      int? latestPromptTokens;
+      int? latestCompletionTokens;
+      int? latestTotalTokens;
 
       if (_llmClient != null) {
         // 获取相关记忆 (RAG)
@@ -144,9 +267,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
         // 使用上下文管理器构建上下文
         final context = _contextManager.buildContext(
-          allMessages: state.messages.sublist(
+          allMessages: pendingMessages.sublist(
             0,
-            state.messages.length - 1,
+            pendingMessages.length - 1,
           ), // 排除刚添加的用户消息
           currentInput: content,
           memories: relevantMemories,
@@ -255,6 +378,18 @@ class ChatNotifier extends StateNotifier<ChatState> {
             ${context.hasMemories ? '## 记忆参考（仅作背景，不要逐条复述，只有在自然相关时再使用）\n${context.memorySummary.trim()}' : ''}
             ''';
 
+        final estimatedRequestTokens = _estimateRequestTokens(
+          enhancedPrompt,
+          context.messages,
+        );
+        state = state.copyWith(
+          metrics: _buildMetrics(
+            pendingMessages,
+            includedContextMessages: context.messages.length,
+            estimatedRequestTokens: estimatedRequestTokens,
+          ),
+        );
+
         final response = await _llmClient.chat(
           systemPrompt: enhancedPrompt,
           messages: context.messages,
@@ -266,9 +401,17 @@ class ChatNotifier extends StateNotifier<ChatState> {
           reasoningEffort: _llmSettings.reasoningEffort,
         );
 
-        final parsed = ResponseParser.parse(response);
+        final parsed = ResponseParser.parse(response.content);
         responseText = parsed.text;
         emotion = parsed.emotion;
+        latestPromptTokens =
+            response.usage.promptTokens ?? estimatedRequestTokens;
+        latestCompletionTokens =
+            response.usage.completionTokens ??
+            _contextManager.estimateTokens(responseText);
+        latestTotalTokens =
+            response.usage.totalTokens ??
+            latestPromptTokens + latestCompletionTokens;
       } else {
         // 模拟响应
         // await Future.delayed(const Duration(milliseconds: 800));
@@ -298,10 +441,18 @@ class ChatNotifier extends StateNotifier<ChatState> {
         emotion: emotion,
       );
 
+      final updatedMessages = [...state.messages, aiMessage];
       state = state.copyWith(
-        messages: [...state.messages, aiMessage],
+        messages: updatedMessages,
         isLoading: false,
         currentEmotion: emotion,
+        metrics: _buildMetrics(
+          updatedMessages,
+          estimatedRequestTokens: state.metrics.estimatedRequestTokens,
+          lastPromptTokens: latestPromptTokens,
+          lastCompletionTokens: latestCompletionTokens,
+          lastTotalTokens: latestTotalTokens,
+        ),
       );
 
       // 保存到数据库
@@ -314,7 +465,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     }
   }
 
-  /// 提取重要信息保存为记忆
+  // 提取重要信息保存为记忆
   Future<void> _extractAndSaveMemory(
     String userInput,
     String aiResponse,
@@ -340,10 +491,10 @@ class ChatNotifier extends StateNotifier<ChatState> {
     }
   }
 
-  /// 清空对话
+  // 清空对话
   Future<void> clearMessages() async {
     await _memoryRepo?.clearHistory();
-    state = const ChatState();
+    state = ChatState(metrics: _buildMetrics(const []));
   }
 
   @override
@@ -353,7 +504,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   }
 }
 
-/// Provider 定义
+// Provider 定义
 final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   final memoryRepo = ref.watch(memoryRepositoryProvider);
   final personaAsync = ref.watch(currentPersonaProvider);
@@ -377,6 +528,7 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
     memoryRepo: memoryRepo,
     persona: persona,
     llmSettings: appSettings.llmSettings,
+    modelName: apiSettings.model,
   );
 
   // 加载历史对话

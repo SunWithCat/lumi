@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/config/app_settings.dart';
@@ -92,6 +93,8 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                 .setMaxContextMessages(v.round()),
             valueLabel: _getMaxContextMessagesLabel(llm.maxContextMessages),
           ),
+          const SizedBox(height: 16),
+          _buildContextWindowCard(context, llm),
           const SizedBox(height: 16),
           _buildThinkingToggle(context, llm),
           const SizedBox(height: 20),
@@ -266,7 +269,7 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '开启后模型会先思考再回答噢~',
+                      '开启后模型会先思考再回答',
                       style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                     ),
                   ],
@@ -300,6 +303,239 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildContextWindowCard(BuildContext context, LLMSettings llm) {
+    final colorScheme = context.colorScheme;
+    const options = [32000, 64000, 128000, 200000, 256000];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                '模型上下文窗口',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF333333),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.secondary.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _formatContextWindow(llm.contextWindowTokens),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '这个值用于计算上下文占用比例',
+            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: options
+                .map(
+                  (value) => _buildContextWindowOption(
+                    context,
+                    value: value,
+                    selectedValue: llm.contextWindowTokens,
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _showCustomContextWindowDialog(context, llm),
+                  icon: const Icon(Icons.edit_rounded, size: 18),
+                  label: const Text('自定义输入'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colorScheme.primary,
+                    side: BorderSide(
+                      color: colorScheme.secondary.withValues(alpha: 0.6),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Tip: 如果不确定模型上限，可以先选择 128k 噢~',
+            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContextWindowOption(
+    BuildContext context, {
+    required int value,
+    required int selectedValue,
+  }) {
+    final colorScheme = context.colorScheme;
+    final isSelected = value == selectedValue;
+
+    return GestureDetector(
+      onTap: () {
+        ref.read(appSettingsProvider.notifier).setContextWindowTokens(value);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? colorScheme.primary.withValues(alpha: 0.1)
+              : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? colorScheme.primary : Colors.grey[200]!,
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          _formatContextWindow(value),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            color: isSelected ? colorScheme.primary : Colors.grey[700],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCustomContextWindowDialog(
+    BuildContext context,
+    LLMSettings llm,
+  ) async {
+    final controller = TextEditingController(
+      text: llm.contextWindowTokens.toString(),
+    );
+    final colorScheme = context.colorScheme;
+
+    final result = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            '自定义上下文窗口',
+            style: TextStyle(color: Color(0xFF333333)),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: const InputDecoration(
+                  labelText: '输入模型的最大上下文 Token 数',
+                  hintText: '例如 128000',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '范围一般在 8000 ~ 2000000 之间，请自行根据模型文档调整~',
+                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text('取消', style: TextStyle(color: Colors.grey[600])),
+            ),
+            TextButton(
+              onPressed: () {
+                final value = int.tryParse(controller.text.trim());
+                if (value == null || value < 8000 || value > 2000000) {
+                  toastification.dismissAll();
+                  toastification.show(
+                    context: context,
+                    title: const Text('请输入 8000 到 2000000 之间的整数'),
+                    type: ToastificationType.warning,
+                    style: ToastificationStyle.flat,
+                    primaryColor: colorScheme.primary,
+                    autoCloseDuration: const Duration(seconds: 2),
+                    alignment: Alignment.bottomCenter,
+                    showProgressBar: false,
+                  );
+                  return;
+                }
+                Navigator.pop(dialogContext, value);
+              },
+              child: Text('保存', style: TextStyle(color: colorScheme.primary)),
+            ),
+          ],
+        );
+      },
+    );
+
+    controller.dispose();
+
+    if (result == null) return;
+
+    await ref.read(appSettingsProvider.notifier).setContextWindowTokens(result);
+
+    if (!context.mounted) return;
+    toastification.dismissAll();
+    toastification.show(
+      context: context,
+      title: Text('设置上下文窗口成功~'),
+      type: ToastificationType.success,
+      style: ToastificationStyle.flat,
+      primaryColor: colorScheme.primary,
+      icon: Icon(Icons.check_circle_rounded, color: colorScheme.primary),
+      autoCloseDuration: const Duration(seconds: 2),
+      alignment: Alignment.bottomCenter,
+      showProgressBar: false,
     );
   }
 
@@ -498,5 +734,12 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
     if (value <= 300) return '标准';
     if (value <= 500) return '较长';
     return '超长';
+  }
+
+  String _formatContextWindow(int value) {
+    if (value % 1000 == 0) {
+      return '${value ~/ 1000}k';
+    }
+    return '${(value / 1000).toStringAsFixed(0)}k';
   }
 }

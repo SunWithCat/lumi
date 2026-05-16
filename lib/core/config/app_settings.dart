@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/features/memory/data/database/app_database.dart';
 import 'package:lumi/features/memory/presentation/providers/memory_provider.dart';
 
-/// 画质等级
+// 画质等级
 enum RenderQuality {
   low(512, '省电模式', '512x512 · 流畅省电'),
   medium(1024, '平衡模式', '1024x1024 · 推荐使用'),
@@ -37,13 +37,14 @@ class ApiSettings {
   }
 }
 
-/// LLM 参数配置
+// LLM 参数配置
 class LLMSettings {
   final double temperature; // 0.0-2.0, 越高越随机
   final int maxTokens; // 最大输出 token 数
   final double topP; // 0.0-1.0
   final bool enableSearch;
   final int maxContextMessages; // 上下文消息数量限制
+  final int contextWindowTokens; // 模型上下文窗口 token 上限
   final bool enableThinking; // DeepSeek-V4-Flash 专属思考模式
   final String reasoningEffort; // DeepSeek-V4-Flash 专属思考强度
 
@@ -53,6 +54,7 @@ class LLMSettings {
     this.topP = 1.0,
     this.enableSearch = false,
     this.maxContextMessages = 300,
+    this.contextWindowTokens = 128000,
     this.enableThinking = true,
     this.reasoningEffort = 'high',
   });
@@ -63,6 +65,7 @@ class LLMSettings {
     double? topP,
     bool? enableSearch,
     int? maxContextMessages,
+    int? contextWindowTokens,
     bool? enableThinking,
     String? reasoningEffort,
   }) {
@@ -72,13 +75,14 @@ class LLMSettings {
       topP: topP ?? this.topP,
       enableSearch: enableSearch ?? this.enableSearch,
       maxContextMessages: maxContextMessages ?? this.maxContextMessages,
+      contextWindowTokens: contextWindowTokens ?? this.contextWindowTokens,
       enableThinking: enableThinking ?? this.enableThinking,
       reasoningEffort: reasoningEffort ?? this.reasoningEffort,
     );
   }
 }
 
-/// 应用设置状态
+// 应用设置状态
 class AppSettingsState {
   final RenderQuality renderQuality;
   final LLMSettings llmSettings;
@@ -103,7 +107,7 @@ class AppSettingsState {
   }
 }
 
-/// 设置管理器
+// 设置管理器
 class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
   static const _keyRenderQuality = 'render_quality';
   static const _keyLLMTemperature = 'llm_temperature';
@@ -114,6 +118,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
   static const _keyApiModel = 'api_model';
   static const _keyEnableSearch = 'enable_search';
   static const _keyMaxContextMessages = 'max_context_messages';
+  static const _keyContextWindowTokens = 'context_window_tokens';
   static const _keyEnableThinking = 'enable_thinking';
   static const _keyReasoningEffort = 'reasoning_effort';
 
@@ -134,6 +139,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     final apiKeyStr = await _db.getSetting(_keyApiKey);
     final modelStr = await _db.getSetting(_keyApiModel);
     final maxContextMessagesStr = await _db.getSetting(_keyMaxContextMessages);
+    final contextWindowTokensStr = await _db.getSetting(_keyContextWindowTokens);
     final enableThinkingStr = await _db.getSetting(_keyEnableThinking);
     final reasoningEffortStr = await _db.getSetting(_keyReasoningEffort);
 
@@ -149,6 +155,8 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
       topP: double.tryParse(topPStr ?? '') ?? 1.0,
       enableSearch: bool.tryParse(enableSearch ?? '') ?? false,
       maxContextMessages: int.tryParse(maxContextMessagesStr ?? '') ?? 300,
+      contextWindowTokens:
+          int.tryParse(contextWindowTokensStr ?? '') ?? 128000,
       enableThinking: bool.tryParse(enableThinkingStr ?? '') ?? true,
       reasoningEffort: reasoningEffortStr ?? 'high',
     );
@@ -166,7 +174,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     );
   }
 
-  /// 等待设置加载完成并返回当前状态
+  // 等待设置加载完成并返回当前状态
   Future<AppSettingsState> waitForLoad() async {
     await _loadFuture;
     return state;
@@ -177,7 +185,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     await _db.setSetting(_keyRenderQuality, quality.index.toString());
   }
 
-  /// 设置 LLM Temperature
+  // 设置 LLM Temperature
   Future<void> setLLMTemperature(double value) async {
     final clamped = value.clamp(0.0, 2.0);
     state = state.copyWith(
@@ -186,7 +194,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     await _db.setSetting(_keyLLMTemperature, clamped.toString());
   }
 
-  /// 设置 LLM Max Tokens
+  // 设置 LLM Max Tokens
   Future<void> setLLMMaxTokens(int value) async {
     final clamped = value.clamp(100, 8192);
     state = state.copyWith(
@@ -195,7 +203,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     await _db.setSetting(_keyLLMMaxTokens, clamped.toString());
   }
 
-  /// 设置 LLM Top P
+  // 设置 LLM Top P
   Future<void> setLLMTopP(double value) async {
     final clamped = value.clamp(0.0, 1.0);
     state = state.copyWith(
@@ -204,7 +212,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     await _db.setSetting(_keyLLMTopP, clamped.toString());
   }
 
-  /// 设置联网搜索
+  // 设置联网搜索
   Future<void> setEnableSearch(bool value) async {
     state = state.copyWith(
       llmSettings: state.llmSettings.copyWith(enableSearch: value),
@@ -228,7 +236,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     await _db.setSetting(_keyReasoningEffort, effort);
   }
 
-  /// 设置上下文消息数量限制
+  // 设置上下文消息数量限制
   Future<void> setMaxContextMessages(int value) async {
     final clamped = value.clamp(50, 1000);
     state = state.copyWith(
@@ -237,12 +245,25 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     await _db.setSetting(_keyMaxContextMessages, clamped.toString());
   }
 
-  /// 批量更新 LLM 设置
+  // 设置模型上下文窗口 Token 上限
+  Future<void> setContextWindowTokens(int value) async {
+    final clamped = value.clamp(8000, 2000000);
+    state = state.copyWith(
+      llmSettings: state.llmSettings.copyWith(contextWindowTokens: clamped),
+    );
+    await _db.setSetting(_keyContextWindowTokens, clamped.toString());
+  }
+
+  // 批量更新 LLM 设置
   Future<void> updateLLMSettings(LLMSettings settings) async {
     state = state.copyWith(llmSettings: settings);
     await _db.setSetting(_keyLLMTemperature, settings.temperature.toString());
     await _db.setSetting(_keyLLMMaxTokens, settings.maxTokens.toString());
     await _db.setSetting(_keyLLMTopP, settings.topP.toString());
+    await _db.setSetting(
+      _keyMaxContextMessages,
+      settings.maxContextMessages.toString(),
+    );
   }
 
   // 批量更新 API 设置
@@ -275,7 +296,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
   }
 }
 
-/// Provider
+// Provider
 final appSettingsProvider =
     StateNotifierProvider<AppSettingsNotifier, AppSettingsState>((ref) {
       final db = ref.watch(databaseProvider);

@@ -1,7 +1,26 @@
 import 'package:dio/dio.dart';
 import 'package:lumi/core/utils/logger.dart';
 
-/// LLM 客户端 (兼容 OpenAI/DeepSeek API)
+class LLMTokenUsage {
+  final int? promptTokens;
+  final int? completionTokens;
+  final int? totalTokens;
+
+  const LLMTokenUsage({
+    this.promptTokens,
+    this.completionTokens,
+    this.totalTokens,
+  });
+}
+
+class LLMChatResponse {
+  final String content;
+  final LLMTokenUsage usage;
+
+  const LLMChatResponse({required this.content, required this.usage});
+}
+
+// LLM 客户端 (兼容 OpenAI/DeepSeek API)
 class LLMClient {
   final Dio _dio;
   final String _baseUrl;
@@ -27,7 +46,7 @@ class LLMClient {
   /// [maxTokens] 最大输出 token 数，越大回复越长
   /// [topP] 0.0-1.0, nucleus sampling
   /// [enableSearch] 设置是否联网
-  Future<String> chat({
+  Future<LLMChatResponse> chat({
     required String systemPrompt,
     required List<Map<String, String>> messages,
     double temperature = 0.7,
@@ -107,6 +126,7 @@ class LLMClient {
 
       final choice = response.data['choices'][0];
       final message = choice['message'];
+      final usage = response.data['usage'] as Map<String, dynamic>?;
 
       // 支持思考模式的模型会返回 reasoning_content 和 content
       // 普通模型只返回 content
@@ -125,7 +145,14 @@ class LLMClient {
       }
 
       AppLogger.d('LLM Response: $content');
-      return content;
+      return LLMChatResponse(
+        content: content,
+        usage: LLMTokenUsage(
+          promptTokens: _readUsageToken(usage, 'prompt_tokens'),
+          completionTokens: _readUsageToken(usage, 'completion_tokens'),
+          totalTokens: _readUsageToken(usage, 'total_tokens'),
+        ),
+      );
     } on DioException catch (e) {
       // 尝试去除思考参数
       if (enableThinking && e.response?.statusCode == 400) {
@@ -171,6 +198,12 @@ class LLMClient {
       AppLogger.e('LLM Error', e, st);
       throw LLMException('未知错误: $e');
     }
+  }
+
+  int? _readUsageToken(Map<String, dynamic>? usage, String key) {
+    final value = usage?[key];
+    if (value is num) return value.toInt();
+    return int.tryParse('$value');
   }
 
   void dispose() {

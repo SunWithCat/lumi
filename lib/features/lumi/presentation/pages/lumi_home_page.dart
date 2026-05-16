@@ -31,6 +31,7 @@ class LumiHomePage extends ConsumerStatefulWidget {
 class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   late Live2DController _live2dController;
   bool _live2dInitialized = false;
+  bool _showUsagePanel = false;
   int? _lastResolution;
   final ScrollController _scrollController = ScrollController();
   @override
@@ -80,7 +81,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
     }
   }
 
-  /// 用新分辨率重建 Live2D
+  // 用新分辨率重建 Live2D
   Future<void> _reinitWithNewResolution(int resolution) async {
     setState(() => _live2dInitialized = false);
 
@@ -141,7 +142,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
     );
   }
 
-  /// 仅在用户翻了历史消息时，平滑滚回底部
+  // 仅在用户翻了历史消息时，平滑滚回底部
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients) return;
@@ -215,16 +216,28 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
           _buildLive2DLayer(),
 
           // Layer 2: 顶部操作栏 - 独立 Widget，自己管理数据订阅
-          const _TopBar(),
+          _TopBar(
+            showUsagePanel: _showUsagePanel,
+            onToggleUsagePanel: () {
+              setState(() {
+                _showUsagePanel = !_showUsagePanel;
+              });
+            },
+          ),
 
-          // Layer 3: 聊天界面
-          _ChatPanel(scrollController: _scrollController),
+          // Layer 3: 用量悬浮卡片
+          _UsageOverlay(show: _showUsagePanel),
+
+          // Layer 4: 聊天界面
+          _ChatPanel(
+            scrollController: _scrollController,
+          ),
         ],
       ),
     );
   }
 
-  /// 背景渐变 + 装饰圆球
+  // 背景渐变 + 装饰圆球
   Widget _buildBackground() {
     final lumiColors = context.lumiColors;
     final colorScheme = context.colorScheme;
@@ -273,7 +286,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
     );
   }
 
-  /// Live2D 层 - 固定全屏，永不变化
+  // Live2D 层 - 固定全屏，永不变化
   Widget _buildLive2DLayer() {
     return Positioned.fill(
       child: SafeArea(
@@ -303,9 +316,15 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
   }
 }
 
-/// 避免触发父级 LumiHomePage 重建
+// 避免触发父级 LumiHomePage 重建
 class _TopBar extends ConsumerWidget {
-  const _TopBar();
+  final bool showUsagePanel;
+  final VoidCallback onToggleUsagePanel;
+
+  const _TopBar({
+    required this.showUsagePanel,
+    required this.onToggleUsagePanel,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -326,6 +345,13 @@ class _TopBar extends ConsumerWidget {
               _EmotionIndicator(emotion: emotion),
               Row(
                 children: [
+                  _ActionButton(
+                    icon: showUsagePanel
+                        ? Icons.bar_chart_rounded
+                        : Icons.bar_chart_outlined,
+                    onTap: onToggleUsagePanel,
+                  ),
+                  const SizedBox(width: 8),
                   _ActionButton(
                     icon: Icons.settings_rounded,
                     onTap: () => context.push(AppRoutes.settings),
@@ -450,7 +476,9 @@ class _ChatPanel extends ConsumerWidget {
 
   static const _defaultChatHeight = 280.0;
 
-  const _ChatPanel({required this.scrollController});
+  const _ChatPanel({
+    required this.scrollController,
+  });
 
   Widget _buildMessageList(
     BuildContext context,
@@ -547,7 +575,6 @@ class _ChatPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // MediaQuery 只在这里读取，只有这个 Widget 会被键盘动画触发重建
     final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
     final colorScheme = context.colorScheme;
     final messages = ref.watch(chatProvider.select((state) => state.messages));
@@ -609,7 +636,182 @@ class _ChatPanel extends ConsumerWidget {
   }
 }
 
-/// 消息气泡 - 使用 flutter_animate 实现入场动画
+class _UsageOverlay extends ConsumerWidget {
+  final bool show;
+
+  const _UsageOverlay({required this.show});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final metrics = ref.watch(chatProvider.select((state) => state.metrics));
+
+    final topPadding = MediaQuery.paddingOf(context).top;
+    return Positioned(
+      top: topPadding + 56,
+      left: 16,
+      right: 16,
+      child: IgnorePointer(
+        ignoring: !show,
+        child: AnimatedSlide(
+          offset: show ? Offset.zero : const Offset(0, -0.08),
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          child: AnimatedOpacity(
+            opacity: show ? 1 : 0,
+            duration: const Duration(milliseconds: 180),
+            child: show
+                ? _UsagePanelCard(metrics: metrics)
+                : const SizedBox.shrink(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UsagePanelCard extends StatelessWidget {
+  final ChatUsageMetrics metrics;
+
+  const _UsagePanelCard({required this.metrics});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final usageRatio = metrics.contextUsageRatio;
+
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 520),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.88),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: colorScheme.secondary.withValues(alpha: 0.32),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.primary.withValues(alpha: 0.12),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.query_stats_rounded,
+                  size: 16,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    metrics.modelName.isEmpty
+                        ? '上下文监控'
+                        : '上下文监控 · ${metrics.modelName}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${(usageRatio * 100).toStringAsFixed(1)}%',
+                  style: TextStyle(fontSize: 12, color: colorScheme.primary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _UsageMetricChip(
+                  label: '上下文',
+                  value:
+                      '${metrics.includedContextMessages}/${metrics.maxContextMessages}',
+                ),
+                _UsageMetricChip(
+                  label: '对话≈',
+                  value: '${_formatTokenCount(metrics.totalConversationTokens)} Token',
+                ),
+                _UsageMetricChip(
+                  label: '窗口≈',
+                  value: '${_formatTokenCount(metrics.contextWindowTokens)} Token',
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(99),
+              child: LinearProgressIndicator(
+                value: usageRatio,
+                minHeight: 6,
+                backgroundColor: colorScheme.secondary.withValues(alpha: 0.2),
+                valueColor: AlwaysStoppedAnimation(colorScheme.primary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatTokenCount(int value) {
+    if (value >= 10000) return '${(value / 1000).toStringAsFixed(0)}k';
+    if (value >= 1000) return '${(value / 1000).toStringAsFixed(1)}k';
+    return '$value';
+  }
+}
+
+class _UsageMetricChip extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _UsageMetricChip({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 88),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: colorScheme.onSurface.withValues(alpha: 0.55),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MessageBubble extends StatelessWidget {
   final String text;
   final bool isUser;
@@ -626,7 +828,7 @@ class _MessageBubble extends StatelessWidget {
     required this.maxWidth,
   });
 
-  /// 只有2秒内的新消息才播放入场动画
+  // 只有2秒内的新消息才播放入场动画
   bool get _isNew => DateTime.now().difference(timestamp).inSeconds < 2;
 
   @override
@@ -693,7 +895,6 @@ class _MessageBubble extends StatelessWidget {
       ),
     );
 
-    // 新消息：播放淡入 + 缩放 + 方向性滑入动画；历史消息：直接显示
     if (_isNew) {
       return bubble
           .animate()
