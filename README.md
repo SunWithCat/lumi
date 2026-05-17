@@ -10,7 +10,9 @@
 
 ## 🖼️ 界面展示 (Preview)
 
-> ⚠️ 截图准备中，敬请期待……
+| 主页 (Home) | 角色 (Persona) | 设置 (Settings) |
+| :---: | :---: | :---: |
+| <img src="home_page.jpg" width="280"> | <img src="persona_page.jpg" width="280"> | <img src="settings_page.jpg" width="280"> |
 
 ---
 
@@ -35,9 +37,15 @@
 
 ## 📦 下载 (Download)
 
-> 🚧 Release 版本筹备中，敬请期待……
->
-> 后续将通过 [GitHub Releases](https://github.com/SunWithCat/lumi/releases) 提供预编译 APK 下载。
+> 🚀 **前往 [GitHub Releases](https://github.com/SunWithCat/lumi/releases) 获取最新的发行版本！**
+
+为了获得最佳的“同步”体验，请根据您的设备架构选择合适的安装包喵：
+
+| 安装包名称 | 适用设备 | 推荐说明 |
+| :--- | :--- | :--- |
+| `app-arm64-v8a-release` | **主流 Android 手机** | 64 位原生架构，性能最强、响应最快！✨ |
+| `app-x86_64-release` | **Android 模拟器** | 适合在电脑上进行开发调试或大屏体验喵~ |
+| `app-release` | **混合架构 (Universal)** | 同时集成 v8a 与 x64，省去纠结的万能选！(≧∇≦)/ |
 
 ---
 
@@ -50,7 +58,7 @@
 | 资源类别 | 获取路径 | 备注 / 目标位置 |
 | :-- | :-- | :-- |
 | **Cubism SDK** | [Cubism SDK Native](https://www.live2d.com/sdk/download/native/) | **必须手动下载**解压并放入 `android/app/src/main/cpp/CubismSdkForNative` |
-| **Live2D Model** | [Live2D 官方示例模型](https://www.live2d.com/sdk/download/sample-data/) | **必须手动下载**（目前仅适配 **Hiyori (Pro版 / 桃濑日和 Pro)** 模型），解压后将模型文件夹重命名为 `hiyori_pro_zh` 并放入 `android/app/src/main/assets/` 目录下 |
+| **Live2D Model** | [Live2D 官方示例模型](https://www.live2d.com/learn/sample/) | **必须手动下载**（目前仅适配 **Hiyori (Pro版 / 桃濑日和 Pro)** 模型），解压后将模型文件夹（`hiyori_pro_zh`）放入 `android/app/src/main/assets/` 目录下 |
 | **API Key** | [DeepSeek](https://platform.deepseek.com/) | 建议优先使用 DeepSeek-V4-flash（或最新模型版本）获得高性价比的大模型对话体验 |
 
 ### Step 2 · 环境配置 (Environment Setup)
