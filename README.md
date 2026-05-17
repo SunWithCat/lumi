@@ -50,7 +50,7 @@
 | 资源类别 | 获取路径 | 备注 / 目标位置 |
 | :-- | :-- | :-- |
 | **Cubism SDK** | [Cubism SDK Native](https://www.live2d.com/sdk/download/native/) | **必须手动下载**解压并放入 `android/app/src/main/cpp/CubismSdkForNative` |
-| **Live2D Model** | 内置指定模型 (Hiyori) | 目前仅适配 `hiyori_pro_zh` 系列模型，请参考 `assets/` 目录 |
+| **Live2D Model** | [Live2D 官方示例模型](https://www.live2d.com/sdk/download/sample-data/) | **必须手动下载**（目前仅适配 **Hiyori (Pro版 / 桃濑日和 Pro)** 模型），解压后将模型文件夹重命名为 `hiyori_pro_zh` 并放入 `android/app/src/main/assets/` 目录下 |
 | **API Key** | [DeepSeek](https://platform.deepseek.com/) | 建议优先使用 DeepSeek-V4-flash（或最新模型版本）获得高性价比的大模型对话体验 |
 
 ### Step 2 · 环境配置 (Environment Setup)
@@ -65,16 +65,15 @@
 
 ### Step 3 · 常见问题 (Troubleshooting)
 
-- **渲染黑屏？** 请检查 `CubismSdkForNative` 路径是否包含正确的 Core 文件夹及其生成的库文件。
-- **角色不动？** 确认 `assets/` 下的模型文件夹名称与代码中加载的路径一致哦~
+- **渲染黑屏？** 请检查 `android/app/src/main/cpp/CubismSdkForNative` 路径是否包含正确的 Core 文件夹及其生成的库文件。
+- **角色不动？** 确认 `android/app/src/main/assets/` 下的模型文件夹名称与代码中加载的路径一致哦~
 
 ---
 
 ## 🛡️ 法律声明 (Legal)
 
-- **关于模型资源**：本项目内置的 `hiyori_pro_zh` 模型资源仅用于**功能演示、学术研究与非营利性学习**。
+- **关于模型资源**：本项目**不内置任何 Live2D 模型资源**。文档及配置中提及的 `hiyori_pro_zh` 系列模型仅作为演示与配置参考，用户自行下载配置的资源应仅用于**功能演示、学术研究与非营利性学习**。
 - **版权声明**：模型的所有权归原作者（Live2D Inc.）所有。
-- **版权协商**：如相关版权方认为资源使用不当，请及时联系，我会第一时间配合处理。
 
 ---
 
