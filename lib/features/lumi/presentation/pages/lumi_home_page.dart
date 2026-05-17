@@ -177,25 +177,61 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
               ),
-              title: const Text('还没配置 API Key哦~'),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.vpn_key_rounded,
+                      color: context.colorScheme.primary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    '还没配置 API Key 哦~',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF333333),
+                    ),
+                  ),
+                ],
+              ),
               content: const Text(
                 '需要先在设置页面填写 API Key，快去配置一下吧，不然我没法陪你聊天呢~(≧ω≦)',
+                style: TextStyle(color: Color(0xFF666666)),
               ),
               actions: [
                 TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('再想想'),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    '再想想',
+                    style: TextStyle(color: Colors.grey[500]),
+                  ),
                 ),
-                TextButton(
+                ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    context.push(AppRoutes.settingsApi); // 跳转到设置
+                    context.push(AppRoutes.settingsApi);
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: context.colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   child: const Text('去配置'),
                 ),
               ],
@@ -375,8 +411,33 @@ class _TopBar extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('清除对话', style: TextStyle(color: Color(0xFF333333))),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.delete_sweep_rounded,
+                color: Colors.redAccent,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              '清除对话',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF333333),
+              ),
+            ),
+          ],
+        ),
         content: const Text(
           '确定要清除所有对话记录吗？',
           style: TextStyle(color: Color(0xFF666666)),
@@ -386,15 +447,20 @@ class _TopBar extends ConsumerWidget {
             onPressed: () => Navigator.pop(ctx),
             child: Text('取消', style: TextStyle(color: Colors.grey[600])),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
               ref.read(chatProvider.notifier).clearMessages();
               Navigator.pop(ctx);
             },
-            child: Text(
-              '确定',
-              style: TextStyle(color: context.colorScheme.primary),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
+            child: const Text('确定'),
           ),
         ],
       ),

@@ -459,12 +459,34 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
       builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
           ),
-          title: const Text(
-            '自定义上下文窗口',
-            style: TextStyle(color: Color(0xFF333333)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.memory_rounded,
+                  color: colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                '自定义上下文窗口',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF333333),
+                ),
+              ),
+            ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -474,25 +496,70 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                 controller: controller,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(
-                  labelText: '输入模型的最大上下文 Token 数',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+                decoration: InputDecoration(
+                  labelText: '最大 Context Tokens',
+                  labelStyle: TextStyle(color: Colors.grey[600]),
                   hintText: '例如 128000',
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  prefixIcon: Icon(Icons.pin_rounded,
+                      color: colorScheme.primary, size: 20),
+                  suffixText: 'Tokens',
+                  suffixStyle: TextStyle(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 ),
               ),
-              const SizedBox(height: 10),
-              Text(
-                '范围一般在 8000 ~ 2000000 之间，请自行根据模型文档调整~',
-                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border:
+                      Border.all(color: Colors.orange.withValues(alpha: 0.1)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded,
+                        size: 16, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '通常在 8k ~ 2M 之间，请参考模型文档~',
+                        style:
+                            TextStyle(fontSize: 11, color: Colors.orange[800]),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
+          actionsPadding: const EdgeInsets.only(right: 16, bottom: 16),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: Text('取消', style: TextStyle(color: Colors.grey[600])),
+              child: Text(
+                '取消',
+                style: TextStyle(
+                    color: Colors.grey[500], fontWeight: FontWeight.w500),
+              ),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 final value = int.tryParse(controller.text.trim());
                 if (value == null || value < 8000 || value > 2000000) {
@@ -511,7 +578,18 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                 }
                 Navigator.pop(dialogContext, value);
               },
-              child: Text('保存', style: TextStyle(color: colorScheme.primary)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('保存',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         );

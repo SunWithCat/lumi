@@ -63,74 +63,204 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
   }
 
   void _showCompactionPreview(CompactionResult result) {
+    final colorScheme = context.colorScheme;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('压缩预览', style: TextStyle(color: Color(0xFF333333))),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.auto_fix_high_rounded,
+                color: colorScheme.primary,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              '压缩预览',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF333333),
+              ),
+            ),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildStatRow('总记忆数', '${result.totalMemories}'),
-            _buildStatRow('可删除数', '${result.toRemoveCount}'),
-            _buildStatRow(
-              '节省空间',
-              '${(result.estimatedSavings * 100).toStringAsFixed(1)}%',
+            Row(
+              children: [
+                _buildCompactStatCard(
+                  '总记忆',
+                  '${result.totalMemories}',
+                  colorScheme.primary,
+                ),
+                const SizedBox(width: 10),
+                _buildCompactStatCard(
+                  '可删除',
+                  '${result.toRemoveCount}',
+                  Colors.orange,
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            if (result.mergeResults.isNotEmpty) ...[
-              const Text(
-                '相似记忆组:',
-                style: TextStyle(fontWeight: FontWeight.w500),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.1)),
               ),
-              const SizedBox(height: 8),
-              ...result.mergeResults
-                  .take(3)
-                  .map(
-                    (merge) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        '• 保留: "${_truncate(merge.keep.content, 30)}"\n  删除 ${merge.remove.length} 条相似',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF666666),
-                        ),
-                      ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    '预计节省空间',
+                    style: TextStyle(fontSize: 13, color: Colors.green),
+                  ),
+                  Text(
+                    '${(result.estimatedSavings * 100).toStringAsFixed(1)}%',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
                     ),
                   ),
+                ],
+              ),
+            ),
+            if (result.mergeResults.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Icon(Icons.layers_rounded, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 6),
+                  Text(
+                    '相似记忆合并建议',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 200),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: result.mergeResults
+                        .take(5)
+                        .map((merge) => _buildMergeItem(merge))
+                        .toList(),
+                  ),
+                ),
+              ),
             ],
           ],
         ),
+        actionsPadding: const EdgeInsets.only(right: 16, bottom: 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('取消', style: TextStyle(color: Colors.grey[600])),
+            child: Text('取消', style: TextStyle(color: Colors.grey[500])),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               _runCompaction(dryRun: false);
             },
-            child: Text(
-              '执行压缩',
-              style: TextStyle(color: context.colorScheme.primary),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
+            child: const Text('执行压缩'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+  Widget _buildCompactStatCard(String label, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.1)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMergeItem(MemoryMergeResult merge) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Color(0xFF666666))),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+          const Icon(Icons.check_circle_outline_rounded,
+              size: 14, color: Colors.green),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _truncate(merge.keep.content, 50),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF333333),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '将合并 ${merge.remove.length} 条相似内容',
+                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -164,8 +294,33 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('清空所有记忆', style: TextStyle(color: Color(0xFF333333))),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.redAccent,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              '清空所有记忆',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF333333),
+              ),
+            ),
+          ],
+        ),
         content: const Text(
           '确定要清空所有记忆吗？此操作不可恢复！',
           style: TextStyle(color: Color(0xFF666666)),
@@ -175,9 +330,17 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
             onPressed: () => Navigator.pop(ctx, false),
             child: Text('取消', style: TextStyle(color: Colors.grey[600])),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('清空', style: TextStyle(color: Colors.redAccent)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('清空'),
           ),
         ],
       ),
@@ -375,22 +538,54 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+            surfaceTintColor: Colors.transparent,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Colors.redAccent,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  '删除记忆',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF333333),
+                  ),
+                ),
+              ],
             ),
-            title: const Text('删除记忆'),
-            content: const Text('确定要删除这条记忆吗？'),
+            content: const Text(
+              '确定要删除这条记忆吗？',
+              style: TextStyle(color: Color(0xFF666666)),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('取消'),
+                child: Text('取消', style: TextStyle(color: Colors.grey[600])),
               ),
-              TextButton(
+              ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
-                  '删除',
-                  style: TextStyle(color: Colors.redAccent),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
+                child: const Text('删除'),
               ),
             ],
           ),

@@ -51,7 +51,7 @@ app.*.map.json
 /android/local.properties
 
 # API 配置 (包含敏感信息)
-**/api_config.local.dart
+
 
 # Cubism SDK (太大，不上传，需要用户自行下载)
 /android/app/src/main/cpp/CubismSdkForNative/

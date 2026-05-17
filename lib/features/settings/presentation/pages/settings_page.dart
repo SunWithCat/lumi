@@ -142,29 +142,64 @@ class SettingsPage extends ConsumerWidget {
         return StatefulBuilder(
           builder: (ctx, setState) {
             return AlertDialog(
-              title: const Text('退出登录'),
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.logout_rounded,
+                      color: Colors.redAccent,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    '退出登录',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF333333),
+                    ),
+                  ),
+                ],
+              ),
               content: isLoading
-                  ? const Row(
+                  ? Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: context.colorScheme.primary,
+                          ),
                         ),
-                        SizedBox(width: 16),
-                        Text('正在退出登录...'),
+                        const SizedBox(width: 16),
+                        const Text('正在退出登录...',
+                            style: TextStyle(color: Color(0xFF666666))),
                       ],
                     )
-                  : const Text('确定要退出登录吗？'),
+                  : const Text('确定要退出登录吗？',
+                      style: TextStyle(color: Color(0xFF666666))),
+              actionsPadding: const EdgeInsets.only(right: 16, bottom: 16),
               actions: isLoading
                   ? null
                   : [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('取消'),
+                        child: Text('取消',
+                            style: TextStyle(color: Colors.grey[600])),
                       ),
-                      TextButton(
+                      ElevatedButton(
                         onPressed: () async {
                           setState(() => isLoading = true);
                           await ref.read(authProvider.notifier).logout();
@@ -173,10 +208,15 @@ class SettingsPage extends ConsumerWidget {
                           if (!context.mounted) return;
                           context.go(AppRoutes.login);
                         },
-                        child: const Text(
-                          '确定',
-                          style: TextStyle(color: Colors.redAccent),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
+                        child: const Text('退出'),
                       ),
                     ],
             );

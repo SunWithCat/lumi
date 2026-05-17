@@ -334,15 +334,44 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('删除人格'),
-        content: Text('确定要删除「${persona.name}」吗？此操作无法撤销。'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.person_remove_rounded,
+                color: Colors.redAccent,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              '删除人格',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF333333),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          '确定要删除「${persona.name}」吗？此操作无法撤销。',
+          style: const TextStyle(color: Color(0xFF666666)),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('取消', style: TextStyle(color: Colors.grey[600])),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
               ref.read(personaProvider.notifier).deletePersona(personaId);
               Navigator.pop(ctx);
@@ -362,7 +391,15 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
                 showProgressBar: false,
               );
             },
-            child: const Text('删除', style: TextStyle(color: Colors.red)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('删除'),
           ),
         ],
       ),
