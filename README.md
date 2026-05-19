@@ -63,7 +63,7 @@
 
 ### Step 2 · 环境配置 (Environment Setup)
 
-- **Flutter 版本**: 3.29.0+
+- **Flutter 版本**: 3.41.9+
 - **NDK 配置**: Android 端渲染依赖 C++，请确保安装了 **NDK (Side-by-side)**。
 - **运行命令**:
   ```bash
@@ -89,7 +89,7 @@
 
 Lumi 是基于 Flutter 跨平台框架的项目，使用了如下的技术：
 
-- **框架:** Flutter 3.29+ 🚀
+- **框架:** Flutter 3.41.9+ 🚀
 - **状态管理:** Riverpod ⚡
 - **数据库:** Drift (SQLite) 🗄️
 - **网络:** Dio 🌐

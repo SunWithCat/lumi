@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.SurfaceTexture
 import android.util.Log
+import androidx.core.content.pm.ShortcutInfoCompat
+import io.flutter.view.TextureRegistry
 import java.nio.ByteBuffer
 
 /**
@@ -20,7 +22,7 @@ object Live2DNative {
 
     external fun nativeInit(
         assetManager: AssetManager,
-        surfaceTexture: SurfaceTexture,
+        surface: android.view.Surface,
         width: Int,
         height: Int
     ): Boolean

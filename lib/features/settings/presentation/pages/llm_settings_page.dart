@@ -279,7 +279,7 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                 scale: 0.85,
                 child: Switch(
                   value: llm.enableThinking,
-                  activeColor: colorScheme.primary,
+                  activeThumbColor: colorScheme.primary,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   onChanged: (v) {
                     ref.read(appSettingsProvider.notifier).setEnableThinking(v);

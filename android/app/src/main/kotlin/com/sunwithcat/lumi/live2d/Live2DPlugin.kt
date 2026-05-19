@@ -27,7 +27,7 @@ class Live2DPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, EventChanne
     private lateinit var eventChannel: EventChannel
     private lateinit var textureRegistry: TextureRegistry
 
-    private var textureEntry: TextureRegistry.SurfaceTextureEntry? = null
+//    private var textureEntry: TextureRegistry.SurfaceTextureEntry? = null
     private var eventSink: EventChannel.EventSink? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -80,14 +80,19 @@ class Live2DPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, EventChanne
         }
     }
 
+    private var surfaceProducer: TextureRegistry.SurfaceProducer? = null
+
     private fun handleInitialize(call: MethodCall, result: MethodChannel.Result) {
         val width = call.argument<Int>("width") ?: 512
         val height = call.argument<Int>("height") ?: 512
 
         try {
-            textureEntry = textureRegistry.createSurfaceTexture()
-            val surfaceTexture = textureEntry!!.surfaceTexture()
-            surfaceTexture.setDefaultBufferSize(width, height)
+            surfaceProducer = textureRegistry.createSurfaceProducer()
+            surfaceProducer!!.setSize(width, height)
+            val surface = surfaceProducer!!.surface
+//            textureEntry = textureRegistry.createSurfaceTexture()
+//            val surfaceTexture = textureEntry!!.surfaceTexture()
+//            surfaceTexture.setDefaultBufferSize(width, height)
 
             if (isNativeAvailable) {
                 // 设置 AssetManager 供纹理加载回调使用
@@ -95,23 +100,23 @@ class Live2DPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, EventChanne
                 
                 val success = Live2DNative.nativeInit(
                     context.assets,
-                    surfaceTexture,
+                    surface,
                     width,
                     height
                 )
                 if (!success) {
-                    textureEntry?.release()
+                    surfaceProducer?.release()
                     result.error("INIT_FAILED", "Native init failed", null)
                     return
                 }
             }
 
-            Log.d(TAG, "Initialized, textureId=${textureEntry!!.id()}")
-            result.success(mapOf("textureId" to textureEntry!!.id()))
+            Log.d(TAG, "Initialized, textureId=${surfaceProducer!!.id()}")
+            result.success(mapOf("textureId" to surfaceProducer!!.id()))
 
         } catch (e: Exception) {
             Log.e(TAG, "Initialize error", e)
-            textureEntry?.release()
+            surfaceProducer?.release()
             result.error("INIT_ERROR", e.message, null)
         }
     }
@@ -129,8 +134,8 @@ class Live2DPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, EventChanne
                 Log.e(TAG, "Native destroy error", e)
             }
         }
-        textureEntry?.release()
-        textureEntry = null
+        surfaceProducer?.release()
+        surfaceProducer = null
     }
 
     private fun handleLoadModel(call: MethodCall, result: MethodChannel.Result) {

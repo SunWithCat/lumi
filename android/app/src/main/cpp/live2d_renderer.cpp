@@ -68,7 +68,7 @@ Live2DRenderer::~Live2DRenderer() {
     Destroy();
 }
 
-bool Live2DRenderer::Initialize(JNIEnv* env, jobject assetManager, jobject surfaceTexture, int width, int height) {
+bool Live2DRenderer::Initialize(JNIEnv* env, jobject assetManager, jobject surface, int width, int height) {
     LOGI("Initializing renderer: %dx%d", width, height);
     
     _width = width;
@@ -83,9 +83,9 @@ bool Live2DRenderer::Initialize(JNIEnv* env, jobject assetManager, jobject surfa
     
     // 从 SurfaceTexture 获取 ANativeWindow
     // jclass surfaceTextureClass = env->GetObjectClass(surfaceTexture);
-    jclass surfaceClass = env->FindClass("android/view/Surface");
-    jmethodID surfaceConstructor = env->GetMethodID(surfaceClass, "<init>", "(Landroid/graphics/SurfaceTexture;)V");
-    jobject surface = env->NewObject(surfaceClass, surfaceConstructor, surfaceTexture);
+    // jclass surfaceClass = env->FindClass("android/view/Surface");
+    // jmethodID surfaceConstructor = env->GetMethodID(surfaceClass, "<init>", "(Landroid/graphics/SurfaceTexture;)V");
+    // jobject surface = env->NewObject(surfaceClass, surfaceConstructor, surfaceTexture);
     
     _nativeWindow = ANativeWindow_fromSurface(env, surface);
     if (!_nativeWindow) {
@@ -95,8 +95,8 @@ bool Live2DRenderer::Initialize(JNIEnv* env, jobject assetManager, jobject surfa
     
     ANativeWindow_setBuffersGeometry(_nativeWindow, width, height, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM);
     
-    env->DeleteLocalRef(surface);
-    env->DeleteLocalRef(surfaceClass);
+    // env->DeleteLocalRef(surface);
+    // env->DeleteLocalRef(surfaceClass);
     // env->DeleteLocalRef(surfaceTextureClass);
     
     // 启动渲染线程（Cubism Framework 将在渲染线程中初始化）

@@ -364,7 +364,7 @@ class SettingsPage extends ConsumerWidget {
             scale: 0.85,
             child: Switch(
               value: hasEnable,
-              activeColor: colorScheme.primary,
+              activeThumbColor: colorScheme.primary,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               onChanged: (v) {
                 ref.read(appSettingsProvider.notifier).setEnableSearch(v);

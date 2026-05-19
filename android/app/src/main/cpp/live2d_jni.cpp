@@ -29,7 +29,7 @@ Java_com_sunwithcat_lumi_live2d_Live2DNative_nativeInit(
     JNIEnv* env,
     jobject thiz,
     jobject assetManager,
-    jobject surfaceTexture,
+    jobject surface,
     jint width,
     jint height
 ) {
@@ -40,7 +40,7 @@ Java_com_sunwithcat_lumi_live2d_Live2DNative_nativeInit(
     }
     
     g_renderer = std::make_unique<Live2DRenderer>();
-    return g_renderer->Initialize(env, assetManager, surfaceTexture, width, height);
+    return g_renderer->Initialize(env, assetManager, surface, width, height);
 }
 
 JNIEXPORT void JNICALL

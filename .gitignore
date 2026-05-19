@@ -52,7 +52,6 @@ app.*.map.json
 
 # API 配置 (包含敏感信息)
 
-
 # Cubism SDK (太大，不上传，需要用户自行下载)
 /android/app/src/main/cpp/CubismSdkForNative/
 
@@ -69,7 +68,6 @@ app.*.map.json
 # 排除用户本地生成的配置文件
 **/api_config.local.dart
 
-
 # 文档 (仅供本地学习使用)
 /docs/
 .kiro/
@@ -80,3 +78,6 @@ app.*.map.json
 key.properties
 *.jks
 *.keystore
+
+# FVM Version Cache
+.fvm/
