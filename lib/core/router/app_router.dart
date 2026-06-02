@@ -5,6 +5,7 @@ import 'package:lumi/features/lumi/presentation/pages/lumi_home_page.dart';
 import 'package:lumi/features/memory/presentation/pages/memory_management_page.dart';
 import 'package:lumi/features/settings/presentation/pages/api_settings_page.dart';
 import 'package:lumi/features/settings/presentation/pages/llm_settings_page.dart';
+import 'package:lumi/features/settings/presentation/pages/profile_settings_page.dart';
 import 'package:lumi/features/settings/presentation/pages/settings_page.dart';
 import 'package:lumi/features/soul/presentation/pages/persona_settings_page.dart';
 
@@ -17,6 +18,7 @@ abstract class AppRoutes {
   static const settingsLlm = '/settings/llm';
   static const settingsApi = '/settings/api';
   static const settingsMemory = '/settings/memory';
+  static const settingsProfile = '/settings/profile';
 }
 
 GoRouter createAppRouter(bool Function() isLoggedIn) {
@@ -72,6 +74,10 @@ GoRouter createAppRouter(bool Function() isLoggedIn) {
       GoRoute(
         path: AppRoutes.settingsMemory,
         builder: (context, state) => const MemoryManagementPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.settingsProfile,
+        builder: (context, state) => const ProfileSettingsPage(),
       ),
     ],
   );

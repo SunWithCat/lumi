@@ -180,7 +180,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         _obscurePassword
                             ? Icons.visibility_off_rounded
                             : Icons.visibility_rounded,
-                        color: context.lumiColors.textSecondary.withValues(alpha: 0.5),
+                        color: context.lumiColors.textSecondary.withValues(
+                          alpha: 0.5,
+                        ),
                         size: 20,
                       ),
                       onPressed: () =>
@@ -211,7 +213,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 4,
-                        shadowColor: context.lumiColors.shadowColor.withValues(alpha: 0.5),
+                        shadowColor: context.lumiColors.shadowColor.withValues(
+                          alpha: 0.5,
+                        ),
                       ),
                       child: _isLoading
                           ? SizedBox(
@@ -240,7 +244,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     child: Text.rich(
                       TextSpan(
                         text: '已有账号？',
-                        style: TextStyle(color: context.lumiColors.textSecondary),
+                        style: TextStyle(
+                          color: context.lumiColors.textSecondary,
+                        ),
                         children: [
                           TextSpan(
                             text: '立即登录',

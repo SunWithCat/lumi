@@ -342,21 +342,24 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// 更新用户资料
-  Future<void> updateUserProfile(
+  Future<User?> updateUserProfile(
     int userId, {
     String? username,
     String? gender,
-    DateTime? birthday,
+    Value<DateTime?> birthday = const Value.absent(),
     String? bio,
+    Value<String?> avatarPath = const Value.absent(),
   }) async {
     await (update(users)..where((t) => t.id.equals(userId))).write(
       UsersCompanion(
         username: username != null ? Value(username) : const Value.absent(),
         gender: gender != null ? Value(gender) : const Value.absent(),
-        birthday: birthday != null ? Value(birthday) : const Value.absent(),
+        birthday: birthday,
         bio: bio != null ? Value(bio) : const Value.absent(),
+        avatarPath: avatarPath,
       ),
     );
+    return getUser(userId);
   }
 
   /// 检查是否有注册用户

@@ -214,10 +214,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    '再想想',
-                    style: TextStyle(color: Colors.grey[500]),
-                  ),
+                  child: Text('再想想', style: TextStyle(color: Colors.grey[500])),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -265,9 +262,7 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
           _UsageOverlay(show: _showUsagePanel),
 
           // Layer 4: 聊天界面
-          _ChatPanel(
-            scrollController: _scrollController,
-          ),
+          _ChatPanel(scrollController: _scrollController),
         ],
       ),
     );
@@ -542,9 +537,7 @@ class _ChatPanel extends ConsumerWidget {
 
   static const _defaultChatHeight = 280.0;
 
-  const _ChatPanel({
-    required this.scrollController,
-  });
+  const _ChatPanel({required this.scrollController});
 
   Widget _buildMessageList(
     BuildContext context,
@@ -806,11 +799,13 @@ class _UsagePanelCard extends StatelessWidget {
                 ),
                 _UsageMetricChip(
                   label: '对话≈',
-                  value: '${_formatTokenCount(metrics.totalConversationTokens)} Token',
+                  value:
+                      '${_formatTokenCount(metrics.totalConversationTokens)} Token',
                 ),
                 _UsageMetricChip(
                   label: '窗口≈',
-                  value: '${_formatTokenCount(metrics.contextWindowTokens)} Token',
+                  value:
+                      '${_formatTokenCount(metrics.contextWindowTokens)} Token',
                 ),
               ],
             ),

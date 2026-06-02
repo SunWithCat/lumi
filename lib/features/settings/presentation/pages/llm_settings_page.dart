@@ -503,8 +503,11 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                   hintText: '例如 128000',
                   filled: true,
                   fillColor: Colors.grey[50],
-                  prefixIcon: Icon(Icons.pin_rounded,
-                      color: colorScheme.primary, size: 20),
+                  prefixIcon: Icon(
+                    Icons.pin_rounded,
+                    color: colorScheme.primary,
+                    size: 20,
+                  ),
                   suffixText: 'Tokens',
                   suffixStyle: TextStyle(
                     color: colorScheme.primary,
@@ -517,10 +520,15 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                    borderSide: BorderSide(
+                      color: colorScheme.primary,
+                      width: 2,
+                    ),
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
@@ -529,19 +537,25 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                 decoration: BoxDecoration(
                   color: Colors.orange.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
-                  border:
-                      Border.all(color: Colors.orange.withValues(alpha: 0.1)),
+                  border: Border.all(
+                    color: Colors.orange.withValues(alpha: 0.1),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline_rounded,
-                        size: 16, color: Colors.orange),
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      size: 16,
+                      color: Colors.orange,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         '通常在 8k ~ 2M 之间，请参考模型文档~',
-                        style:
-                            TextStyle(fontSize: 11, color: Colors.orange[800]),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.orange[800],
+                        ),
                       ),
                     ),
                   ],
@@ -556,7 +570,9 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
               child: Text(
                 '取消',
                 style: TextStyle(
-                    color: Colors.grey[500], fontWeight: FontWeight.w500),
+                  color: Colors.grey[500],
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
             ElevatedButton(
@@ -582,14 +598,18 @@ class _LLMSettingsPageState extends ConsumerState<LLMSettingsPage> {
                 backgroundColor: colorScheme.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('保存',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text(
+                '保存',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         );

@@ -10,6 +10,5 @@ void main() async {
   AppLogger.init();
   AppLogger.i('Project Lumi starting...');
 
-
   runApp(const ProviderScope(child: LumiApp()));
 }

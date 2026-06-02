@@ -139,7 +139,9 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     final apiKeyStr = await _db.getSetting(_keyApiKey);
     final modelStr = await _db.getSetting(_keyApiModel);
     final maxContextMessagesStr = await _db.getSetting(_keyMaxContextMessages);
-    final contextWindowTokensStr = await _db.getSetting(_keyContextWindowTokens);
+    final contextWindowTokensStr = await _db.getSetting(
+      _keyContextWindowTokens,
+    );
     final enableThinkingStr = await _db.getSetting(_keyEnableThinking);
     final reasoningEffortStr = await _db.getSetting(_keyReasoningEffort);
 
@@ -155,8 +157,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
       topP: double.tryParse(topPStr ?? '') ?? 1.0,
       enableSearch: bool.tryParse(enableSearch ?? '') ?? false,
       maxContextMessages: int.tryParse(maxContextMessagesStr ?? '') ?? 300,
-      contextWindowTokens:
-          int.tryParse(contextWindowTokensStr ?? '') ?? 128000,
+      contextWindowTokens: int.tryParse(contextWindowTokensStr ?? '') ?? 128000,
       enableThinking: bool.tryParse(enableThinkingStr ?? '') ?? true,
       reasoningEffort: reasoningEffortStr ?? 'high',
     );

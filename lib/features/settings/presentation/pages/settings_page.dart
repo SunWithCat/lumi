@@ -36,6 +36,15 @@ class SettingsPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _buildSectionTitle('账号'),
+          _buildSettingCard(
+            context: context,
+            icon: Icons.account_circle_rounded,
+            title: '个人资料',
+            subtitle: '设置用户名、生日等',
+            onTap: () => context.push(AppRoutes.settingsProfile),
+          ),
+          const SizedBox(height: 24),
           _buildSectionTitle('角色'),
           _buildSettingCard(
             context: context,
@@ -145,7 +154,8 @@ class SettingsPage extends ConsumerWidget {
               backgroundColor: Colors.white,
               surfaceTintColor: Colors.transparent,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24)),
+                borderRadius: BorderRadius.circular(24),
+              ),
               title: Row(
                 children: [
                   Container(
@@ -184,20 +194,26 @@ class SettingsPage extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        const Text('正在退出登录...',
-                            style: TextStyle(color: Color(0xFF666666))),
+                        const Text(
+                          '正在退出登录...',
+                          style: TextStyle(color: Color(0xFF666666)),
+                        ),
                       ],
                     )
-                  : const Text('确定要退出登录吗？',
-                      style: TextStyle(color: Color(0xFF666666))),
+                  : const Text(
+                      '确定要退出登录吗？',
+                      style: TextStyle(color: Color(0xFF666666)),
+                    ),
               actionsPadding: const EdgeInsets.only(right: 16, bottom: 16),
               actions: isLoading
                   ? null
                   : [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: Text('取消',
-                            style: TextStyle(color: Colors.grey[600])),
+                        child: Text(
+                          '取消',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
                       ),
                       ElevatedButton(
                         onPressed: () async {

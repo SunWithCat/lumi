@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/features/memory/data/database/app_database.dart';
 import 'package:lumi/features/memory/presentation/providers/memory_provider.dart';
@@ -112,6 +113,40 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _db.setSetting(_kCurrentUserIdKey, user.id.toString());
     state = AuthState(isLoggedIn: true, currentUser: user, isLoading: false);
     return null; // 成功返回 null
+  }
+
+  Future<String?> updateProfile({
+    required String username,
+    required String gender,
+    required DateTime? birthday,
+    required String bio,
+    required String? avatarPath,
+  }) async {
+    final currentUser = state.currentUser;
+    if (currentUser == null) return '登录状态已失效，请重新登录';
+
+    final trimmedUsername = username.trim();
+    if (trimmedUsername.isEmpty) return '请输入用户名';
+    if (trimmedUsername.length > 20) return '用户名不能超过 20 个字符';
+
+    final updatedUser = await _db.updateUserProfile(
+      currentUser.id,
+      username: trimmedUsername,
+      gender: gender.isEmpty ? '未设置' : gender,
+      birthday: Value(birthday),
+      bio: bio.trim(),
+      avatarPath: Value(avatarPath),
+    );
+
+    if (updatedUser == null) return '用户不存在，请重新登录';
+
+    state = AuthState(
+      isLoggedIn: true,
+      currentUser: updatedUser,
+      isLoading: false,
+    );
+
+    return null;
   }
 
   // 退出登录

@@ -238,8 +238,11 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle_outline_rounded,
-              size: 14, color: Colors.green),
+          const Icon(
+            Icons.check_circle_outline_rounded,
+            size: 14,
+            color: Colors.green,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -539,8 +542,9 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
           builder: (ctx) => AlertDialog(
             backgroundColor: Colors.white,
             surfaceTintColor: Colors.transparent,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
             title: Row(
               children: [
                 Container(

@@ -4,12 +4,6 @@ import 'package:lumi/features/memory/domain/memory_compactor.dart';
 import 'package:lumi/features/soul/domain/entities/chat_message.dart';
 import 'package:lumi/features/soul/domain/entities/emotion.dart';
 
-/// 记忆仓库
-/// ## 职责
-/// 1. 对话消息的 CRUD
-/// 2. 长期记忆的存储与检索
-/// 3. 为 RAG 提供相关记忆
-/// 4. 记忆压缩与清理
 class MemoryRepository {
   final AppDatabase _db;
   final MemoryCompactor _compactor = MemoryCompactor();
@@ -49,12 +43,6 @@ class MemoryRepository {
     await _db.saveMemory(content: content, importance: importance);
   }
 
-  /// 搜索相关记忆 (用于 RAG)
-  ///
-  /// 策略：
-  /// 1. 提取查询中的关键词
-  /// 2. 在记忆中搜索包含这些关键词的内容
-  /// 3. 按重要性排序返回
   Future<List<String>> searchRelevantMemories(
     String query, {
     int limit = 10,
@@ -85,9 +73,6 @@ class MemoryRepository {
     return allMatches.take(limit).map((m) => m.content).toList();
   }
 
-  /// 提取关键词
-  ///
-  /// 混合策略：中文使用 Bigram 切分，非中文按空格分割
   List<String> _extractKeywords(String text) {
     // 停用词列表
     const stopWords = {

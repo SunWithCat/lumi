@@ -1,6 +1,21 @@
-# Lumi 🌸
+<p align="center">
+  <img src="assets/lumi_icon.png" alt="Lumi Logo" width="120" style="border-radius: 50%"/>
+</p>
 
-> **ルミ** · 月相流转，唯光永恒。
+<h1 align="center">Lumi 🌸</h1>
+
+<p align="center">
+  <strong>ルミ · 月相流转</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Flutter-3.41.9-blue.svg?style=flat-square&logo=flutter" alt="Flutter" />
+  <img src="https://img.shields.io/badge/Platform-Android-green.svg?style=flat-square&logo=android" alt="Platform" />
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-orange.svg?style=flat-square" alt="License" />
+  </a>
+</p>
+
 ---
 ## 🌟 Lumi 是什么？
 
@@ -10,9 +25,13 @@
 
 ## 🖼️ 界面展示 (Preview)
 
-| 主页 (Home) | 角色 (Persona) | 设置 (Settings) |
-| :---: | :---: | :---: |
-| <img src="home_page.jpg" width="280"> | <img src="persona_page.jpg" width="280"> | <img src="settings_page.jpg" width="280"> |
+<p align="center">
+  <img src="home_page.jpg" width="250" alt="Home" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="persona_page.jpg" width="250" alt="Persona" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="settings_page.jpg" width="250" alt="Settings" />
+</p>
 
 ---
 
@@ -63,38 +82,28 @@
 
 ### Step 2 · 环境配置 (Environment Setup)
 
-- **Flutter 版本**: 3.41.9+
-- **NDK 配置**: Android 端渲染依赖 C++，请确保安装了 **NDK (Side-by-side)**。
-- **运行命令**:
-  ```bash
-  flutter pub get
-  flutter run
-  ```
+| 环境项 | 推荐 / 锁定版本 | 说明 |
+| :-- | :-- | :-- |
+| **Flutter SDK** | 推荐 **3.41.9**；最低需满足 `>=3.38.0` | 当前本地 FVM 指向 3.41.9，依赖锁定最低 Flutter 版本为 3.38.0 |
+| **JDK** | 建议 **JDK 17** | AGP 8.x 构建建议使用 JDK 17；项目 Java/Kotlin 编译目标为 11 |
+| **Android Gradle Plugin** | **8.9.1** | 已在 `android/settings.gradle.kts` 中锁定，无需单独安装 |
+| **Gradle Wrapper** | **8.12** | 使用项目自带 Gradle Wrapper 构建 |
+| **Kotlin Plugin** | **2.1.0** | 已在 Android 工程中锁定 |
+| **NDK (Side-by-side)** | **27.0.12077973** | 必装，Live2D / Cubism Native 渲染依赖 C++ |
+| **CMake** | **3.22.1** | 必装，用于编译 `android/app/src/main/cpp` 下的 Native 代码 |
+
+安装完成后建议先执行：
+
+```bash
+flutter doctor
+flutter pub get
+flutter run
+```
 
 ### Step 3 · 常见问题 (Troubleshooting)
 
 - **渲染黑屏？** 请检查 `android/app/src/main/cpp/CubismSdkForNative` 路径是否包含正确的 Core 文件夹及其生成的库文件。
 - **角色不动？** 确认 `android/app/src/main/assets/` 下的模型文件夹名称与代码中加载的路径一致哦~
-
----
-
-## 🛡️ 法律声明 (Legal)
-
-- **关于模型资源**：本项目**不内置任何 Live2D 模型资源**。文档及配置中提及的 `hiyori_pro_zh` 系列模型仅作为演示与配置参考，用户自行下载配置的资源应仅用于**功能演示、学术研究与非营利性学习**。
-- **版权声明**：模型的所有权归原作者（Live2D Inc.）所有。
-
----
-
-## 🛠️ 技术栈 (Tech Stack)
-
-Lumi 是基于 Flutter 跨平台框架的项目，使用了如下的技术：
-
-- **框架:** Flutter 3.41.9+ 🚀
-- **状态管理:** Riverpod ⚡
-- **数据库:** Drift (SQLite) 🗄️
-- **网络:** Dio 🌐
-- **渲染:** Live2D Cubism SDK + OpenGL ES 2.0 🎨
-- **AI:** DeepSeek / OpenAI API 🧠
 
 ---
 
@@ -112,31 +121,26 @@ Lumi 是基于 Flutter 跨平台框架的项目，使用了如下的技术：
 
 ## 🙏 致谢 (Acknowledgements)
 
-核心技术与灵感来源：
-
-- [Live2D Cubism SDK](https://www.live2d.com/) —— 赋予 Lumi 灵动的身姿
-- [DeepSeek](https://www.deepseek.com/) —— 点亮 Lumi 温暖的灵魂
-- [Flutter](https://flutter.dev/) —— 编织 Lumi 的每一帧画面
-- [Riverpod](https://riverpod.dev/) —— 守护 Lumi 的每一个状态
-
-感谢所有开源贡献者，让这个数字世界变得更加温暖。
+- [Live2D Cubism SDK](https://www.live2d.com/)
+- [Flutter](https://flutter.dev/)
 
 ---
 
 ## 🌸 寄语
 
-> 此时相望不相闻，愿逐月华流照君。
+> 纵有星河隔次元，微光所及皆是伴。
+
+---
+
+## 🛡️ 法律声明 (Legal)
+
+- **关于模型资源**：本项目**不内置任何 Live2D 模型资源**。文档及配置中提及的 `hiyori_pro_zh` 系列模型仅作为演示与配置参考，用户自行下载配置的资源应仅用于**功能演示、学术研究与非营利性学习**。
+- **版权声明**：模型的所有权归原作者（Live2D Inc.）所有。
 
 ---
 
 ## 📜 开源协议 (License)
 
-本项目采用 **MIT 协议** 开源。
-
-```
-Copyright (c) 2026 SunWithCat
-
-Permission is hereby granted, free of charge...
-```
+本项目采用 **MIT 协议** 开源，完整协议见 [LICENSE](LICENSE)。
 
 > ⚠️ **注意**：项目中的 Live2D 模型资源与 Cubism SDK 不受 MIT 协议覆盖，商用请联系 [Live2D Inc.](https://www.live2d.com/) 获取授权。
