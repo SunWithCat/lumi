@@ -7,12 +7,6 @@ import 'package:lumi/features/memory/presentation/providers/memory_provider.dart
 import 'package:toastification/toastification.dart';
 
 /// 记忆管理页面
-///
-/// 功能：
-/// 1. 查看所有记忆
-/// 2. 删除单条记忆
-/// 3. 执行记忆压缩
-/// 4. 查看记忆统计
 class MemoryManagementPage extends ConsumerStatefulWidget {
   const MemoryManagementPage({super.key});
 
@@ -371,45 +365,108 @@ class _MemoryManagementPageState extends ConsumerState<MemoryManagementPage> {
           onPressed: () => context.pop(),
         ),
         actions: [
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: colorScheme.primary),
-            onSelected: (value) {
-              switch (value) {
-                case 'compact':
-                  _runCompaction(dryRun: true);
-                  break;
-                case 'clear':
-                  _clearAllMemories();
-                  break;
-              }
-            },
-            itemBuilder: (ctx) => [
-              const PopupMenuItem(
-                value: 'compact',
-                child: Row(
-                  children: [
-                    Icon(Icons.compress_rounded, size: 20),
-                    SizedBox(width: 12),
-                    Text('压缩记忆'),
-                  ],
+          Theme(
+            data: Theme.of(context).copyWith(
+              hoverColor: Colors.transparent,
+              splashColor: Colors.transparent,
+            ),
+            child: PopupMenuButton<String>(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.more_horiz_rounded,
+                  color: colorScheme.primary,
+                  size: 20,
                 ),
               ),
-              const PopupMenuItem(
-                value: 'clear',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.delete_forever_rounded,
-                      size: 20,
-                      color: Colors.redAccent,
-                    ),
-                    SizedBox(width: 12),
-                    Text('清空所有', style: TextStyle(color: Colors.redAccent)),
-                  ],
+              tooltip: '更多操作',
+              elevation: 6,
+              shadowColor: Colors.black.withValues(alpha: 0.08),
+              position: PopupMenuPosition.under,
+              offset: const Offset(-8, 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+                side: BorderSide(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  width: 1,
                 ),
               ),
-            ],
+              color: Colors.white.withValues(alpha: 0.9),
+              onSelected: (value) {
+                switch (value) {
+                  case 'compact':
+                    _runCompaction(dryRun: true);
+                    break;
+                  case 'clear':
+                    _clearAllMemories();
+                    break;
+                }
+              },
+              itemBuilder: (ctx) => [
+                PopupMenuItem(
+                  value: 'compact',
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.compress_rounded,
+                          size: 14,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        '压缩记忆',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF333333),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'clear',
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.delete_forever_rounded,
+                          size: 14,
+                          color: Colors.redAccent,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        '清空所有',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.redAccent,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: _isLoading
