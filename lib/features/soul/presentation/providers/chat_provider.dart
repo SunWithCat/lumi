@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumi/features/auth/presentation/providers/auth_provider.dart';
+import 'package:lumi/features/memory/data/database/app_database.dart';
 import 'package:uuid/uuid.dart';
 import 'package:lumi/core/config/app_settings.dart';
 import 'package:lumi/core/utils/logger.dart';
@@ -99,6 +101,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final _uuid = const Uuid();
   final ContextManager _contextManager;
   final _memoryEvaluator = MemoryEvaluator();
+  final User? _currentUser;
   static const _emotionTag = '''
     ## 输出格式硬性要求：情感标签
     每次回复的最后必须附加一个情绪标签，格式只能是以下之一：
@@ -118,6 +121,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     PersonaConfig persona = PersonaConfig.defaultPersona,
     LLMSettings llmSettings = const LLMSettings(),
     String modelName = '',
+    User? currentUser,
   }) : _llmClient = llmClient,
        _memoryRepo = memoryRepo,
        _persona = persona,
@@ -127,6 +131,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
        _contextManager = ContextManager(
          maxContextMessages: llmSettings.maxContextMessages,
        ),
+       _currentUser = currentUser,
        super(const ChatState());
 
   // 初始化：加载历史对话
@@ -367,6 +372,20 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
         final personaPrompt = _hasEmotionTag(_persona.systemPrompt);
 
+        final userProfileBuffer = StringBuffer();
+        if (_currentUser != null) {
+          userProfileBuffer.writeln('- 用户名：${_currentUser.username}');
+          if (_currentUser.birthday != null) {
+            final bday = _currentUser.birthday!;
+            final month = bday.month.toString().padLeft(2, '0');
+            final day = bday.day.toString().padLeft(2, '0');
+            userProfileBuffer.writeln('- 生日：${bday.year}年$month月$day日');
+          }
+          if (_currentUser.bio.trim().isNotEmpty) {
+            userProfileBuffer.writeln('- 个性宣言：${_currentUser.bio.trim()}');
+          }
+        }
+
         // 构建增强的系统提示（叠加时间信息）
         final enhancedPrompt =
             '''
@@ -374,6 +393,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
             ## 当前时间与对话状态
             ${timeInfo.toString()}
+
+            ${_currentUser != null ? '## 当前对话的用户资料\n${userProfileBuffer.toString()}\n（注：你可以知道用户的这些基本资料，并在对话自然契合时提及，比如聊到生日、个性或称呼名字，但不需要在每次回复中都生硬地重复。）' : ''}
 
             ${context.hasMemories ? '## 记忆参考（仅作背景，不要逐条复述，只有在自然相关时再使用）\n${context.memorySummary.trim()}' : ''}
             ''';
@@ -509,6 +530,9 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   final memoryRepo = ref.watch(memoryRepositoryProvider);
   final personaAsync = ref.watch(currentPersonaProvider);
   final appSettings = ref.watch(appSettingsProvider);
+  final currentUser = ref.watch(
+    authProvider.select((state) => state.currentUser),
+  );
 
   // 从 AsyncValue 中获取人格配置，如果还在加载则使用默认
   final persona = personaAsync.valueOrNull ?? PersonaConfig.sakura;
@@ -529,6 +553,7 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
     persona: persona,
     llmSettings: appSettings.llmSettings,
     modelName: apiSettings.model,
+    currentUser: currentUser,
   );
 
   // 加载历史对话
