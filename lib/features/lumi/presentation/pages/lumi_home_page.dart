@@ -102,6 +102,8 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
       _lastResolution = ref.read(appSettingsProvider).renderQuality.resolution;
       await _live2dController.resume();
       setState(() => _live2dInitialized = true);
+      // 补播问候情绪动作（重登场景）
+      _replayGreetingEmotion();
       return;
     }
     // 等待设置加载完成
@@ -119,6 +121,15 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
       _lastResolution = resolution;
       await _live2dController.resume(); // 解除可能残留的暂停状态
       setState(() => _live2dInitialized = true);
+      // 补播问候情绪动作
+      _replayGreetingEmotion();
+    }
+  }
+
+  void _replayGreetingEmotion() {
+    final emotion = ref.read(chatProvider).currentEmotion;
+    if (emotion != EmotionType.neutral) {
+      _playEmotionMotion(emotion);
     }
   }
 

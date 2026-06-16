@@ -188,7 +188,7 @@ class _PersonaSettingsPageState extends ConsumerState<PersonaSettingsPage> {
     final colorScheme = context.colorScheme;
     final isSelected = persona.id == current.id;
     final personaId = int.tryParse(persona.id) ?? 0;
-    final isPreset = personaId <= 3; // ID 1-3 是预设人格
+    final isPreset = personaId <= 4; // ID 1-4 是预设人格
 
     return GestureDetector(
       onTap: isSelected ? null : () => _selectPersona(context, persona),

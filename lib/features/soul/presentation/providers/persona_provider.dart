@@ -3,7 +3,6 @@ import 'package:lumi/features/memory/presentation/providers/memory_provider.dart
 import 'package:lumi/features/soul/data/persona_repository.dart';
 import 'package:lumi/features/soul/domain/entities/persona_config.dart';
 
-/// PersonaRepository Provider - 复用 databaseProvider 避免数据库锁定
 final personaRepositoryProvider = Provider<PersonaRepository>((ref) {
   final db = ref.watch(databaseProvider);
   return PersonaRepository(db);
@@ -44,7 +43,13 @@ class PersonaNotifier extends StateNotifier<AsyncValue<PersonaState>> {
   Future<void> _loadAll() async {
     try {
       final current = await _repo.getCurrentPersona();
-      final all = await _repo.getAllPersonas();
+      var all = await _repo.getAllPersonas();
+      final hasOneesan = all.any((p) => p.name == '雪乃');
+      if (!hasOneesan) {
+        final oneesanPreset = PersonaConfig.oneesan;
+        await _repo.addPersona(oneesanPreset);
+        all = await _repo.getAllPersonas();
+      }
       state = AsyncValue.data(PersonaState(current: current, all: all));
     } catch (e, st) {
       state = AsyncValue.error(e, st);

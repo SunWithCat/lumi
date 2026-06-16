@@ -108,7 +108,7 @@ class AppSettingsState {
 }
 
 // 设置管理器
-class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
+class AppSettingsNotifier extends Notifier<AppSettingsState> {
   static const _keyRenderQuality = 'render_quality';
   static const _keyLLMTemperature = 'llm_temperature';
   static const _keyLLMMaxTokens = 'llm_max_tokens';
@@ -121,12 +121,16 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
   static const _keyContextWindowTokens = 'context_window_tokens';
   static const _keyEnableThinking = 'enable_thinking';
   static const _keyReasoningEffort = 'reasoning_effort';
+  static const _keyEnableGreeting = 'enable_greeting';
 
-  final AppDatabase _db;
+  late AppDatabase _db;
   late final Future<void> _loadFuture;
 
-  AppSettingsNotifier(this._db) : super(const AppSettingsState()) {
+  @override
+  AppSettingsState build() {
+    _db = ref.watch(databaseProvider);
     _loadFuture = _load();
+    return const AppSettingsState();
   }
 
   Future<void> _load() async {
@@ -237,6 +241,17 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
     await _db.setSetting(_keyReasoningEffort, effort);
   }
 
+  // 获取问候功能开关状态
+  Future<bool> isGreetingEnabled() async {
+    final val = await _db.getSetting(_keyEnableGreeting);
+    return bool.tryParse(val ?? '') ?? true; // 默认开启
+  }
+
+  // 设置问候功能开关
+  Future<void> setGreetingEnabled(bool value) async {
+    await _db.setSetting(_keyEnableGreeting, value.toString());
+  }
+
   // 设置上下文消息数量限制
   Future<void> setMaxContextMessages(int value) async {
     final clamped = value.clamp(50, 1000);
@@ -299,7 +314,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettingsState> {
 
 // Provider
 final appSettingsProvider =
-    StateNotifierProvider<AppSettingsNotifier, AppSettingsState>((ref) {
-      final db = ref.watch(databaseProvider);
-      return AppSettingsNotifier(db);
+    NotifierProvider<AppSettingsNotifier, AppSettingsState>(() {
+      // final db = ref.watch(databaseProvider);
+      return AppSettingsNotifier();
     });

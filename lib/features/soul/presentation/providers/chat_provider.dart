@@ -15,6 +15,7 @@ import 'package:lumi/features/soul/data/response_parser.dart';
 import 'package:lumi/features/soul/domain/entities/chat_message.dart';
 import 'package:lumi/features/soul/domain/entities/emotion.dart';
 import 'package:lumi/features/soul/domain/entities/persona_config.dart';
+import 'package:lumi/features/soul/domain/greeting_service.dart';
 import 'package:lumi/features/soul/presentation/providers/persona_provider.dart';
 
 class ChatUsageMetrics {
@@ -94,6 +95,7 @@ class ChatState {
 class ChatNotifier extends StateNotifier<ChatState> {
   final LLMClient? _llmClient;
   final MemoryRepository? _memoryRepo;
+  final AppDatabase _db;
   final PersonaConfig _persona;
   final LLMSettings _llmSettings;
   final String _modelName;
@@ -101,7 +103,10 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final _uuid = const Uuid();
   final ContextManager _contextManager;
   final _memoryEvaluator = MemoryEvaluator();
+  final _greetingService = GreetingService();
   final User? _currentUser;
+  static const _keyLastGreetingTime = 'last_greeting_time';
+  static const _keyEnableGreeting = 'enable_greeting';
   static const _emotionTag = '''
     ## 输出格式硬性要求：情感标签
     每次回复的最后必须附加一个情绪标签，格式只能是以下之一：
@@ -118,12 +123,14 @@ class ChatNotifier extends StateNotifier<ChatState> {
   ChatNotifier({
     LLMClient? llmClient,
     MemoryRepository? memoryRepo,
+    required AppDatabase db,
     PersonaConfig persona = PersonaConfig.defaultPersona,
     LLMSettings llmSettings = const LLMSettings(),
     String modelName = '',
     User? currentUser,
   }) : _llmClient = llmClient,
        _memoryRepo = memoryRepo,
+       _db = db,
        _persona = persona,
        _llmSettings = llmSettings,
        _modelName = modelName,
@@ -146,14 +153,63 @@ class ChatNotifier extends StateNotifier<ChatState> {
       return;
     }
 
-    final conversationsTokens = _estimateConversationTokens(history);
+    List<ChatMessage> finalMessages = history;
+    EmotionType greetingEmotion = EmotionType.neutral;
+
+    // 检查问候功能是否开启
+    final enableGreetingStr = await _db.getSetting(_keyEnableGreeting);
+    final enableGreeting = bool.tryParse(enableGreetingStr ?? '') ?? true;
+
+    if (enableGreeting) {
+      final lastGreetingStr = await _db.getSetting(_keyLastGreetingTime);
+      final lastGreetingTime = lastGreetingStr != null
+          ? DateTime.tryParse(lastGreetingStr)
+          : null;
+
+      final greeting = _greetingService.evaluate(
+        now: DateTime.now(),
+        lastGreetingTime: lastGreetingTime,
+        hasHistory: history.isNotEmpty,
+        persona: _persona,
+      );
+
+      if (greeting != null) {
+        final greetingMessage = ChatMessage(
+          id: _uuid.v4(),
+          content: greeting.template.text,
+          isUser: false,
+          timestamp: DateTime.now(),
+          emotion: greeting.template.emotion,
+        );
+
+        finalMessages = [...history, greetingMessage];
+        greetingEmotion = greeting.template.emotion;
+
+        await _memoryRepo.saveMessage(greetingMessage);
+        await _db.setSetting(
+          _keyLastGreetingTime,
+          DateTime.now().toIso8601String(),
+        );
+
+        AppLogger.d(
+          'Greeting sent: type=${greeting.reunionType}, emotion=${greeting.template.emotion}',
+        );
+      }
+    }
+
+    final conversationsTokens = _estimateConversationTokens(finalMessages);
     final systemOverhead =
         _contextManager.estimateTokens(_persona.systemPrompt) + 12;
 
+    if (state.messages.isNotEmpty || state.isLoading) {
+      return;
+    }
+
     state = state.copyWith(
-      messages: history,
+      messages: finalMessages,
+      currentEmotion: greetingEmotion,
       metrics: _buildMetrics(
-        history,
+        finalMessages,
         estimatedRequestTokens: conversationsTokens + systemOverhead,
       ),
     );
@@ -528,6 +584,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
 // Provider 定义
 final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   final memoryRepo = ref.watch(memoryRepositoryProvider);
+  final db = ref.watch(databaseProvider);
   final personaAsync = ref.watch(currentPersonaProvider);
   final appSettings = ref.watch(appSettingsProvider);
   final currentUser = ref.watch(
@@ -550,6 +607,7 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   final notifier = ChatNotifier(
     llmClient: llmClient,
     memoryRepo: memoryRepo,
+    db: db,
     persona: persona,
     llmSettings: appSettings.llmSettings,
     modelName: apiSettings.model,
