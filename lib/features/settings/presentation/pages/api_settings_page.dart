@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumi/core/config/app_settings.dart';
 import 'package:lumi/core/theme/app_theme.dart';
+import 'package:lumi/features/soul/data/llm_client.dart';
 import 'package:toastification/toastification.dart';
 
 class ApiSettingsPage extends ConsumerStatefulWidget {
@@ -19,6 +20,215 @@ class _ApiSettingsPageState extends ConsumerState<ApiSettingsPage> {
   bool _obscureApiKey = true;
   bool _hasChanges = false;
 
+  bool _isLoadingModels = false;
+  List<String> _cachedModels = [];
+
+  Future<void> _fetchAndSelectModel() async {
+    final baseUrl = _baseUrlController.text.trim();
+    final apiKey = _apiKeyController.text.trim();
+
+    if (baseUrl.isEmpty) {
+      _showToast('请输入 API Base URL', isError: true);
+      return;
+    }
+    // 如果已经拉取过，直接弹抽屉（避免重复请求）
+    if (_cachedModels.isNotEmpty) {
+      _showModelPickerBottomSheet(_cachedModels);
+      return;
+    }
+    setState(() => _isLoadingModels = true);
+    FocusScope.of(context).unfocus();
+    try {
+      final models = await LLMClient.fetchModels(
+        baseUrl: baseUrl,
+        apiKey: apiKey,
+      );
+      if (!mounted) return;
+      if (models.isEmpty) {
+        _showToast('未找到可用模型列表，请确认地址与权限', isError: true);
+        return;
+      }
+      setState(() => _cachedModels = models);
+      _showModelPickerBottomSheet(models);
+    } catch (e) {
+      if (!mounted) return;
+      _showToast(e.toString().replaceAll('LLMException: ', ''), isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingModels = false);
+      }
+    }
+  }
+
+  void _showToast(String message, {bool isError = false}) {
+    final colorScheme = context.colorScheme;
+    toastification.dismissAll();
+    toastification.show(
+      context: context,
+      title: Text(message),
+      type: isError ? ToastificationType.error : ToastificationType.success,
+      style: ToastificationStyle.flat,
+      primaryColor: isError ? Colors.red[400] : colorScheme.primary,
+      icon: Icon(
+        isError ? Icons.error_outline : Icons.check_circle_rounded,
+        color: isError ? Colors.red[400] : colorScheme.primary,
+      ),
+      autoCloseDuration: const Duration(seconds: 2),
+      alignment: Alignment.bottomCenter,
+      showProgressBar: false,
+    );
+  }
+
+  void _showModelPickerBottomSheet(List<String> models) {
+    final colorScheme = context.colorScheme;
+    String searchQuery = '';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final filteredModels = models
+                .where(
+                  (m) => m.toLowerCase().contains(searchQuery.toLowerCase()),
+                )
+                .toList();
+
+            return DraggableScrollableSheet(
+              initialChildSize: 0.65,
+              minChildSize: 0.4,
+              maxChildSize: 0.9,
+              expand: false,
+              builder: (context, scrollController) {
+                return Column(
+                  children: [
+                    // 顶部拖拽条
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    // 标题与刷新按钮
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 4,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '选择模型 (${filteredModels.length})',
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF333333),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.refresh_rounded, size: 20),
+                            tooltip: '重新拉取',
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              _cachedModels.clear();
+                              _fetchAndSelectModel();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    // 搜索框
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: '搜索模型名称...',
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            size: 20,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 0,
+                            horizontal: 16,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        onChanged: (val) {
+                          setModalState(() => searchQuery = val);
+                        },
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    // 模型列表
+                    Expanded(
+                      child: filteredModels.isEmpty
+                          ? Center(
+                              child: Text(
+                                '未找到匹配的模型',
+                                style: TextStyle(color: Colors.grey[400]),
+                              ),
+                            )
+                          : ListView.builder(
+                              controller: scrollController,
+                              itemCount: filteredModels.length,
+                              itemBuilder: (context, index) {
+                                final model = filteredModels[index];
+                                final isSelected =
+                                    _modelController.text.trim() == model;
+
+                                return ListTile(
+                                  title: Text(
+                                    model,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: isSelected
+                                          ? colorScheme.primary
+                                          : const Color(0xFF333333),
+                                    ),
+                                  ),
+                                  trailing: isSelected
+                                      ? Icon(
+                                          Icons.check_circle_rounded,
+                                          color: colorScheme.primary,
+                                          size: 20,
+                                        )
+                                      : null,
+                                  onTap: () {
+                                    _modelController.text = model;
+                                    _onTextChanged();
+                                    Navigator.pop(ctx);
+                                  },
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -28,8 +238,14 @@ class _ApiSettingsPageState extends ConsumerState<ApiSettingsPage> {
     _modelController = TextEditingController(text: settings.model);
 
     // 监听输入变化
-    _baseUrlController.addListener(_onTextChanged);
-    _apiKeyController.addListener(_onTextChanged);
+    _baseUrlController.addListener(() {
+      _cachedModels.clear();
+      _onTextChanged();
+    });
+    _apiKeyController.addListener(() {
+      _cachedModels.clear();
+      _onTextChanged();
+    });
     _modelController.addListener(_onTextChanged);
   }
 
@@ -119,7 +335,24 @@ class _ApiSettingsPageState extends ConsumerState<ApiSettingsPage> {
                 controller: _modelController,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _saveSettings(),
-                helperText: '例如: deepseek-v4-flash, glm-5.1',
+                helperText: '可手动输入，或点击右侧按钮在线获取模型列表',
+                suffixIcon: _isLoadingModels
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : IconButton(
+                        icon: Icon(
+                          Icons.format_list_bulleted_rounded,
+                          color: colorScheme.primary,
+                        ),
+                        tooltip: '获取并选择模型',
+                        onPressed: _fetchAndSelectModel,
+                      ),
               ),
               const SizedBox(height: 24),
               SizedBox(

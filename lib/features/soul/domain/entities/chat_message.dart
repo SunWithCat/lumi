@@ -7,6 +7,7 @@ class ChatMessage {
   final bool isUser;
   final DateTime timestamp;
   final EmotionType? emotion;
+  final String? thinkingContent; // AI 思维链内容
 
   const ChatMessage({
     required this.id,
@@ -14,6 +15,7 @@ class ChatMessage {
     required this.isUser,
     required this.timestamp,
     this.emotion,
+    this.thinkingContent,
   });
 
   ChatMessage copyWith({
@@ -22,6 +24,7 @@ class ChatMessage {
     bool? isUser,
     DateTime? timestamp,
     EmotionType? emotion,
+    String? thinkingContent,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -29,6 +32,7 @@ class ChatMessage {
       isUser: isUser ?? this.isUser,
       timestamp: timestamp ?? this.timestamp,
       emotion: emotion ?? this.emotion,
+      thinkingContent: thinkingContent ?? this.thinkingContent,
     );
   }
 }

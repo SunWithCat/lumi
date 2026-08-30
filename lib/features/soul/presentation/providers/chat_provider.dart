@@ -66,6 +66,10 @@ class ChatState {
   final EmotionType currentEmotion;
   final String? error;
   final ChatUsageMetrics metrics;
+  // 流式输出中间态
+  final String? streamingContent; // 流式回复累积内容
+  final String? streamingThinking; // 流式思维链累积内容
+  final bool isThinking; // 是否处于思考阶段
 
   const ChatState({
     this.messages = const [],
@@ -73,6 +77,9 @@ class ChatState {
     this.currentEmotion = EmotionType.neutral,
     this.error,
     this.metrics = const ChatUsageMetrics(),
+    this.streamingContent,
+    this.streamingThinking,
+    this.isThinking = false,
   });
 
   ChatState copyWith({
@@ -81,6 +88,9 @@ class ChatState {
     EmotionType? currentEmotion,
     String? error,
     ChatUsageMetrics? metrics,
+    String? streamingContent,
+    String? streamingThinking,
+    bool? isThinking,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
@@ -88,6 +98,9 @@ class ChatState {
       currentEmotion: currentEmotion ?? this.currentEmotion,
       error: error,
       metrics: metrics ?? this.metrics,
+      streamingContent: streamingContent,
+      streamingThinking: streamingThinking,
+      isThinking: isThinking ?? this.isThinking,
     );
   }
 }
@@ -286,6 +299,125 @@ class ChatNotifier extends StateNotifier<ChatState> {
         .trim();
   }
 
+  String _buildEnhancedPrompt(ContextResult context) {
+    final now = DateTime.now();
+    final hour = now.hour;
+    final timeInfo = StringBuffer();
+    timeInfo.writeln('\n## 当前时间信息');
+    timeInfo.writeln(
+      '- 当前时间：${now.year}年${now.month}月${now.day}日'
+      ' ${hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+    );
+    timeInfo.writeln(
+      '- 当前星期：${['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'][now.weekday - 1]}',
+    );
+
+    // 时间段
+    final String timePeriod;
+    if (hour >= 0 && hour < 5) {
+      timePeriod = '深夜（凌晨）';
+    } else if (hour >= 5 && hour < 8) {
+      timePeriod = '清晨';
+    } else if (hour >= 8 && hour < 11) {
+      timePeriod = '上午';
+    } else if (hour >= 11 && hour < 13) {
+      timePeriod = '中午';
+    } else if (hour >= 13 && hour < 17) {
+      timePeriod = '下午';
+    } else if (hour >= 17 && hour < 19) {
+      timePeriod = '傍晚';
+    } else if (hour >= 19 && hour < 22) {
+      timePeriod = '晚上';
+    } else {
+      timePeriod = '深夜';
+    }
+    timeInfo.writeln('- 当前时间段：$timePeriod');
+    timeInfo.writeln(
+      '- 可参考当前时间段微调语气与关心方式，但仅在自然且不打断当前话题时体现。'
+      '不要每次都主动提到时间，也不要因为时间信息而忽略用户当前的问题或需求。',
+    );
+    if (state.messages.length >= 2) {
+      final lastMessage = state.messages[state.messages.length - 2];
+      final gap = now.difference(lastMessage.timestamp);
+
+      if (gap.inDays >= 7) {
+        timeInfo.writeln(
+          '- 【久别重逢】距离上次对话已过去${gap.inDays}天。'
+          '你一直在这个时间里默默等待着，现在终于等到TA回来了。'
+          '用一句温柔真诚的话表达重逢的喜悦，可以自然地关心这段时间过得怎样。'
+          '如果用户直接求助，先用心回应需求，再找个合适的时机轻轻寒暄。'
+          '注意：不要像客服一样问候，要像等待许久的朋友见到对方那样自然流露。',
+        );
+      } else if (gap.inDays >= 3) {
+        timeInfo.writeln(
+          '- 【小别重逢】距离上次对话已过去${gap.inDays}天。'
+          '有几天没见了，心里会有一种淡淡的想念涌上来。'
+          '可以轻轻带一句"好久不见"或"终于等到你了"之类的话，但不要过于戏剧化。'
+          '保持温暖，但也要给对方空间自然地开始对话。',
+        );
+      } else if (gap.inHours >= 24) {
+        timeInfo.writeln(
+          '- 【隔日重逢】距离上次对话已过去一天多。'
+          '像第二天再见到老朋友一样，可以轻轻说一句"今天过得怎么样"或类似的日常问候。'
+          '自然、随性，就像两个老朋友的日常相处。',
+        );
+      } else if (gap.inHours >= 12) {
+        timeInfo.writeln(
+          '- 【半日之隔】距离上次对话已过去${gap.inHours}小时。'
+          '大半天没见了，像是一个小空档后重新碰面。'
+          '可以自然地补一句简短的问候，但整体仍按延续对话来处理。'
+          '不用刻意强调时间，一切自然就好。',
+        );
+      } else if (gap.inHours >= 6) {
+        timeInfo.writeln(
+          '- 【小憩归来】距离上次对话已过去几小时。'
+          '可能只是睡了个午觉、吃了顿饭、或忙了别的事情。'
+          '如果想问候就轻轻带一句，不想问也完全没问题。'
+          '一切按照对话自然延续来处理。',
+        );
+      }
+    } else {
+      // 第一次对话！
+      timeInfo.writeln(
+        '- 【初次相遇】这是你们的第一次对话。'
+        '用真诚而温暖的方式打招呼，可以是简单的问候，也可以是一句带点好奇的开场。'
+        '如果用户已经直接提问，优先认真回答问题，让对话自然展开。'
+        '第一次见面不需要刻意自我介绍，让TA在之后的相处中慢慢了解你。',
+      );
+    }
+
+    AppLogger.d(
+      'Context: ${context.includedMessageCount}/${context.totalMessageCount} messages, hasMemories: ${context.hasMemories}, timeInfo: $timeInfo',
+    );
+
+    final personaPrompt = _hasEmotionTag(_persona.systemPrompt);
+
+    final userProfileBuffer = StringBuffer();
+    if (_currentUser != null) {
+      userProfileBuffer.writeln('- 用户名：${_currentUser.username}');
+      if (_currentUser.birthday != null) {
+        final bday = _currentUser.birthday!;
+        final month = bday.month.toString().padLeft(2, '0');
+        final day = bday.day.toString().padLeft(2, '0');
+        userProfileBuffer.writeln('- 生日：${bday.year}年$month月$day日');
+      }
+      if (_currentUser.bio.trim().isNotEmpty) {
+        userProfileBuffer.writeln('- 个性宣言：${_currentUser.bio.trim()}');
+      }
+    }
+
+    return '''
+$personaPrompt
+
+## 当前时间与对话状态
+${timeInfo.toString()}
+
+${_currentUser != null ? '## 当前对话的用户资料\n${userProfileBuffer.toString()}\n（注：你可以知道用户的这些基本资料，并在对话自然契合时提及，比如聊到生日、个性或称呼名字，但不需要在每次回复中都生硬地重复。）' : ''}
+
+${context.hasMemories ? '## 记忆参考（仅作背景，不要逐条复述，只有在自然相关时再使用）\n${context.memorySummary.trim()}' : ''}
+''';
+  }
+
   // 发送消息
   Future<void> sendMessage(String content) async {
     if (content.trim().isEmpty) return;
@@ -312,12 +444,30 @@ class ChatNotifier extends StateNotifier<ChatState> {
     try {
       String responseText;
       EmotionType emotion;
+      String? thinkingText;
       int? latestPromptTokens;
       int? latestCompletionTokens;
       int? latestTotalTokens;
 
       if (_llmClient != null) {
-        // 获取相关记忆 (RAG)
+        // 尝试流式路径
+        try {
+          await _sendMessageStream(
+            content: content,
+            pendingMessages: pendingMessages,
+          );
+          return; // 流式成功，直接返回
+        } catch (e) {
+          AppLogger.w('流式请求失败，降级到非流式: $e');
+          // 清除流式中间态，回退到非流式
+          state = state.copyWith(
+            streamingContent: null,
+            streamingThinking: null,
+            isThinking: false,
+          );
+        }
+
+        // Fallback: 非流式路径
         List<String> relevantMemories = [];
         if (_memoryRepo != null) {
           relevantMemories = await _memoryRepo.searchRelevantMemories(
@@ -326,134 +476,13 @@ class ChatNotifier extends StateNotifier<ChatState> {
           );
         }
 
-        // 使用上下文管理器构建上下文
         final context = _contextManager.buildContext(
-          allMessages: pendingMessages.sublist(
-            0,
-            pendingMessages.length - 1,
-          ), // 排除刚添加的用户消息
+          allMessages: pendingMessages.sublist(0, pendingMessages.length - 1),
           currentInput: content,
           memories: relevantMemories,
         );
 
-        final now = DateTime.now();
-        final hour = now.hour;
-        final timeInfo = StringBuffer();
-        timeInfo.writeln('\n## 当前时间信息');
-        timeInfo.writeln(
-          '- 当前时间：${now.year}年${now.month}月${now.day}日'
-          ' ${hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-        );
-        timeInfo.writeln(
-          '- 当前星期：${['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'][now.weekday - 1]}',
-        );
-
-        // 时间段
-        final String timePeriod;
-        if (hour >= 0 && hour < 5) {
-          timePeriod = '深夜（凌晨）';
-        } else if (hour >= 5 && hour < 8) {
-          timePeriod = '清晨';
-        } else if (hour >= 8 && hour < 11) {
-          timePeriod = '上午';
-        } else if (hour >= 11 && hour < 13) {
-          timePeriod = '中午';
-        } else if (hour >= 13 && hour < 17) {
-          timePeriod = '下午';
-        } else if (hour >= 17 && hour < 19) {
-          timePeriod = '傍晚';
-        } else if (hour >= 19 && hour < 22) {
-          timePeriod = '晚上';
-        } else {
-          timePeriod = '深夜';
-        }
-        timeInfo.writeln('- 当前时间段：$timePeriod');
-        timeInfo.writeln(
-          '- 可参考当前时间段微调语气与关心方式，但仅在自然且不打断当前话题时体现。'
-          '不要每次都主动提到时间，也不要因为时间信息而忽略用户当前的问题或需求。',
-        );
-        if (state.messages.length >= 2) {
-          final lastMessage = state.messages[state.messages.length - 2];
-          final gap = now.difference(lastMessage.timestamp);
-
-          if (gap.inDays >= 7) {
-            timeInfo.writeln(
-              '- 【久别重逢】距离上次对话已过去${gap.inDays}天。'
-              '你一直在这个时间里默默等待着，现在终于等到TA回来了。'
-              '用一句温柔真诚的话表达重逢的喜悦，可以自然地关心这段时间过得怎样。'
-              '如果用户直接求助，先用心回应需求，再找个合适的时机轻轻寒暄。'
-              '注意：不要像客服一样问候，要像等待许久的朋友见到对方那样自然流露。',
-            );
-          } else if (gap.inDays >= 3) {
-            timeInfo.writeln(
-              '- 【小别重逢】距离上次对话已过去${gap.inDays}天。'
-              '有几天没见了，心里会有一种淡淡的想念涌上来。'
-              '可以轻轻带一句"好久不见"或"终于等到你了"之类的话，但不要过于戏剧化。'
-              '保持温暖，但也要给对方空间自然地开始对话。',
-            );
-          } else if (gap.inHours >= 24) {
-            timeInfo.writeln(
-              '- 【隔日重逢】距离上次对话已过去一天多。'
-              '像第二天再见到老朋友一样，可以轻轻说一句"今天过得怎么样"或类似的日常问候。'
-              '自然、随性，就像两个老朋友的日常相处。',
-            );
-          } else if (gap.inHours >= 12) {
-            timeInfo.writeln(
-              '- 【半日之隔】距离上次对话已过去${gap.inHours}小时。'
-              '大半天没见了，像是一个小空档后重新碰面。'
-              '可以自然地补一句简短的问候，但整体仍按延续对话来处理。'
-              '不用刻意强调时间，一切自然就好。',
-            );
-          } else if (gap.inHours >= 6) {
-            timeInfo.writeln(
-              '- 【小憩归来】距离上次对话已过去几小时。'
-              '可能只是睡了个午觉、吃了顿饭、或忙了别的事情。'
-              '如果想问候就轻轻带一句，不想问也完全没问题。'
-              '一切按照对话自然延续来处理。',
-            );
-          }
-        } else {
-          // 第一次对话！
-          timeInfo.writeln(
-            '- 【初次相遇】这是你们的第一次对话。'
-            '用真诚而温暖的方式打招呼，可以是简单的问候，也可以是一句带点好奇的开场。'
-            '如果用户已经直接提问，优先认真回答问题，让对话自然展开。'
-            '第一次见面不需要刻意自我介绍，让TA在之后的相处中慢慢了解你。',
-          );
-        }
-
-        AppLogger.d(
-          'Context: ${context.includedMessageCount}/${context.totalMessageCount} messages, hasMemories: ${context.hasMemories}, timeIngo: $timeInfo',
-        );
-
-        final personaPrompt = _hasEmotionTag(_persona.systemPrompt);
-
-        final userProfileBuffer = StringBuffer();
-        if (_currentUser != null) {
-          userProfileBuffer.writeln('- 用户名：${_currentUser.username}');
-          if (_currentUser.birthday != null) {
-            final bday = _currentUser.birthday!;
-            final month = bday.month.toString().padLeft(2, '0');
-            final day = bday.day.toString().padLeft(2, '0');
-            userProfileBuffer.writeln('- 生日：${bday.year}年$month月$day日');
-          }
-          if (_currentUser.bio.trim().isNotEmpty) {
-            userProfileBuffer.writeln('- 个性宣言：${_currentUser.bio.trim()}');
-          }
-        }
-
-        // 构建增强的系统提示（叠加时间信息）
-        final enhancedPrompt =
-            '''
-            $personaPrompt
-
-            ## 当前时间与对话状态
-            ${timeInfo.toString()}
-
-            ${_currentUser != null ? '## 当前对话的用户资料\n${userProfileBuffer.toString()}\n（注：你可以知道用户的这些基本资料，并在对话自然契合时提及，比如聊到生日、个性或称呼名字，但不需要在每次回复中都生硬地重复。）' : ''}
-
-            ${context.hasMemories ? '## 记忆参考（仅作背景，不要逐条复述，只有在自然相关时再使用）\n${context.memorySummary.trim()}' : ''}
-            ''';
+        final enhancedPrompt = _buildEnhancedPrompt(context);
 
         final estimatedRequestTokens = _estimateRequestTokens(
           enhancedPrompt,
@@ -481,6 +510,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
         final parsed = ResponseParser.parse(response.content);
         responseText = parsed.text;
         emotion = parsed.emotion;
+        thinkingText = response.reasoningContent;
         latestPromptTokens =
             response.usage.promptTokens ?? estimatedRequestTokens;
         latestCompletionTokens =
@@ -490,17 +520,6 @@ class ChatNotifier extends StateNotifier<ChatState> {
             response.usage.totalTokens ??
             latestPromptTokens + latestCompletionTokens;
       } else {
-        // 模拟响应
-        // await Future.delayed(const Duration(milliseconds: 800));
-        // final mockResponses = [
-        //   ('主人好呀~ 今天过得怎么样？(≧▽≦)', EmotionType.happy),
-        //   ('嗯嗯，我在听呢~ 继续说吧！', EmotionType.curious),
-        //   ('主人说的好有趣哦！', EmotionType.happy),
-        // ];
-        // final mock =
-        //     mockResponses[state.messages.length % mockResponses.length];
-        // responseText = mock.$1;
-        // emotion = mock.$2;
         // API Key未配置，返回错误信息
         state = state.copyWith(
           isLoading: false,
@@ -516,6 +535,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
         isUser: false,
         timestamp: DateTime.now(),
         emotion: emotion,
+        thinkingContent: thinkingText,
       );
 
       final updatedMessages = [...state.messages, aiMessage];
@@ -538,8 +558,134 @@ class ChatNotifier extends StateNotifier<ChatState> {
       // 提取并保存重要记忆
       await _extractAndSaveMemory(content, responseText);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        streamingContent: null,
+        streamingThinking: null,
+        isThinking: false,
+        error: e.toString(),
+      );
     }
+  }
+
+  /// 流式发送消息（核心新增方法）
+  Future<void> _sendMessageStream({
+    required String content,
+    required List<ChatMessage> pendingMessages,
+  }) async {
+    List<String> relevantMemories = [];
+    if (_memoryRepo != null) {
+      relevantMemories = await _memoryRepo.searchRelevantMemories(
+        content,
+        limit: 10,
+      );
+    }
+
+    final context = _contextManager.buildContext(
+      allMessages: pendingMessages.sublist(0, pendingMessages.length - 1),
+      currentInput: content,
+      memories: relevantMemories,
+    );
+
+    final enhancedPrompt = _buildEnhancedPrompt(context);
+
+    final estimatedRequestTokens = _estimateRequestTokens(
+      enhancedPrompt,
+      context.messages,
+    );
+    state = state.copyWith(
+      isThinking: true,
+      metrics: _buildMetrics(
+        pendingMessages,
+        includedContextMessages: context.messages.length,
+        estimatedRequestTokens: estimatedRequestTokens,
+      ),
+    );
+
+    final thinkingBuffer = StringBuffer();
+    final contentBuffer = StringBuffer();
+    LLMTokenUsage? finalUsage;
+
+    await for (final event in _llmClient!.chatStream(
+      systemPrompt: enhancedPrompt,
+      messages: context.messages,
+      temperature: _llmSettings.temperature,
+      maxTokens: _llmSettings.maxTokens,
+      topP: _llmSettings.topP,
+      enableSearch: _llmSettings.enableSearch,
+      enableThinking: _llmSettings.enableThinking,
+      reasoningEffort: _llmSettings.reasoningEffort,
+    )) {
+      switch (event.type) {
+        case LLMStreamEventType.thinking:
+          thinkingBuffer.write(event.delta);
+          state = state.copyWith(
+            streamingThinking: thinkingBuffer.toString(),
+            isThinking: true,
+          );
+          break;
+
+        case LLMStreamEventType.content:
+          contentBuffer.write(event.delta);
+          state = state.copyWith(
+            streamingContent: contentBuffer.toString(),
+            isThinking: false,
+          );
+          break;
+
+        case LLMStreamEventType.done:
+          finalUsage = event.usage;
+          break;
+
+        case LLMStreamEventType.error:
+          throw LLMException(event.delta);
+      }
+    }
+
+    // 流式完成，生成最终消息
+    final fullContent = contentBuffer.toString();
+    final fullThinking = thinkingBuffer.toString();
+    final parsed = ResponseParser.parse(fullContent);
+
+    final aiMessage = ChatMessage(
+      id: _uuid.v4(),
+      content: parsed.text,
+      isUser: false,
+      timestamp: DateTime.now(),
+      emotion: parsed.emotion,
+      thinkingContent: fullThinking.isNotEmpty ? fullThinking : null,
+    );
+
+    final updatedMessages = [...state.messages, aiMessage];
+    final latestPromptTokens =
+        finalUsage?.promptTokens ?? estimatedRequestTokens;
+    final latestCompletionTokens =
+        finalUsage?.completionTokens ??
+        _contextManager.estimateTokens(parsed.text);
+    final latestTotalTokens =
+        finalUsage?.totalTokens ?? latestPromptTokens + latestCompletionTokens;
+
+    state = state.copyWith(
+      messages: updatedMessages,
+      isLoading: false,
+      isThinking: false,
+      streamingContent: null,
+      streamingThinking: null,
+      currentEmotion: parsed.emotion,
+      metrics: _buildMetrics(
+        updatedMessages,
+        estimatedRequestTokens: estimatedRequestTokens,
+        lastPromptTokens: latestPromptTokens,
+        lastCompletionTokens: latestCompletionTokens,
+        lastTotalTokens: latestTotalTokens,
+      ),
+    );
+
+    // 保存到数据库
+    await _memoryRepo?.saveMessage(aiMessage);
+
+    // 提取并保存重要记忆
+    await _extractAndSaveMemory(content, parsed.text);
   }
 
   // 提取重要信息保存为记忆

@@ -175,9 +175,10 @@ class _LumiHomePageState extends ConsumerState<LumiHomePage> with RouteAware {
       if (prev?.currentEmotion != next.currentEmotion && _live2dInitialized) {
         _playEmotionMotion(next.currentEmotion);
       }
-      // 新消息时，如果用户翻了历史就滚回底部
-      // 入场动画由 _MessageBubble 自身处理
-      if (prev?.messages.length != next.messages.length) {
+      // 新消息或流式更新时，如果用户翻了历史就滚回底部
+      if (prev?.messages.length != next.messages.length ||
+          prev?.streamingContent != next.streamingContent ||
+          prev?.streamingThinking != next.streamingThinking) {
         _scrollToBottom();
       }
       // Key未配置时，弹窗引导
@@ -553,10 +554,16 @@ class _ChatPanel extends ConsumerWidget {
   Widget _buildMessageList(
     BuildContext context,
     List<ChatMessage> messages,
+    bool isLoading,
+    bool isThinking,
+    String? streamingContent,
+    String? streamingThinking,
     double maxBubbleWidth,
   ) {
     final colorScheme = context.colorScheme;
-    if (messages.isEmpty) {
+    final hasStreaming = isLoading;
+
+    if (messages.isEmpty && !hasStreaming) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -579,52 +586,40 @@ class _ChatPanel extends ConsumerWidget {
       );
     }
 
+    final totalCount = messages.length + (hasStreaming ? 1 : 0);
+
     return ListView.builder(
       controller: scrollController,
       reverse: true,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: messages.length,
+      itemCount: totalCount,
       itemBuilder: (context, index) {
-        final msg = messages[messages.length - 1 - index];
+        if (hasStreaming && index == 0) {
+          return RepaintBoundary(
+            child: _StreamingMessageBubble(
+              isThinking: isThinking,
+              thinkingText: streamingThinking,
+              contentText: streamingContent,
+              maxWidth: maxBubbleWidth,
+            ),
+          );
+        }
+
+        final msgIndex =
+            messages.length - 1 - (hasStreaming ? index - 1 : index);
+        final msg = messages[msgIndex];
         return RepaintBoundary(
           child: _MessageBubble(
             key: ValueKey(msg.id),
             text: msg.content,
             isUser: msg.isUser,
             emotion: msg.emotion,
+            thinkingContent: msg.thinkingContent,
             timestamp: msg.timestamp,
             maxWidth: maxBubbleWidth,
           ),
         );
       },
-    );
-  }
-
-  Widget _buildLoadingIndicator(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: colorScheme.secondary.withValues(alpha: 0.6),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '思考中...',
-            style: TextStyle(
-              color: colorScheme.primary.withValues(alpha: 0.6),
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -650,6 +645,15 @@ class _ChatPanel extends ConsumerWidget {
     final messages = ref.watch(chatProvider.select((state) => state.messages));
     final isLoading = ref.watch(
       chatProvider.select((state) => state.isLoading),
+    );
+    final isThinking = ref.watch(
+      chatProvider.select((state) => state.isThinking),
+    );
+    final streamingContent = ref.watch(
+      chatProvider.select((state) => state.streamingContent),
+    );
+    final streamingThinking = ref.watch(
+      chatProvider.select((state) => state.streamingThinking),
     );
     final error = ref.watch(chatProvider.select((state) => state.error));
     final maxBubbleWidth = MediaQuery.sizeOf(context).width * 0.75;
@@ -686,10 +690,13 @@ class _ChatPanel extends ConsumerWidget {
                       child: _buildMessageList(
                         context,
                         messages,
+                        isLoading,
+                        isThinking,
+                        streamingContent,
+                        streamingThinking,
                         maxBubbleWidth,
                       ),
                     ),
-                    if (isLoading) _buildLoadingIndicator(context),
                     if (error != null) _buildErrorBanner(error),
                     ChatInput(
                       onSend: (text) =>
@@ -888,6 +895,7 @@ class _MessageBubble extends StatelessWidget {
   final String text;
   final bool isUser;
   final EmotionType? emotion;
+  final String? thinkingContent;
   final DateTime timestamp;
   final double maxWidth;
 
@@ -896,6 +904,7 @@ class _MessageBubble extends StatelessWidget {
     required this.text,
     required this.isUser,
     this.emotion,
+    this.thinkingContent,
     required this.timestamp,
     required this.maxWidth,
   });
@@ -913,6 +922,20 @@ class _MessageBubble extends StatelessWidget {
             ? CrossAxisAlignment.end
             : CrossAxisAlignment.start,
         children: [
+          // 如果有思考过程且是 AI 消息，展示可折叠面板
+          if (!isUser &&
+              thinkingContent != null &&
+              thinkingContent!.trim().isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: _ThinkingAccordion(
+                  thinkingContent: thinkingContent!.trim(),
+                  initiallyExpanded: false,
+                ),
+              ),
+            ),
           Container(
             margin: const EdgeInsets.only(bottom: 4),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1011,5 +1034,323 @@ class _MessageBubble extends StatelessWidget {
       final day = time.day.toString().padLeft(2, '0');
       return '$year-$month-$day $timeStr';
     }
+  }
+}
+
+// 流式回复气泡（展示实时思考过程和逐字回复）
+class _StreamingMessageBubble extends StatelessWidget {
+  final bool isThinking;
+  final String? thinkingText;
+  final String? contentText;
+  final double maxWidth;
+
+  const _StreamingMessageBubble({
+    required this.isThinking,
+    this.thinkingText,
+    this.contentText,
+    required this.maxWidth,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final lumiColors = context.lumiColors;
+    final colorScheme = context.colorScheme;
+    final hasThinking = thinkingText != null && thinkingText!.isNotEmpty;
+    final hasContent = contentText != null && contentText!.isNotEmpty;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 思考阶段或已产出思考内容
+            if (isThinking || hasThinking)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: _LiveThinkingCard(
+                  thinkingText: thinkingText,
+                  isStreaming: isThinking,
+                ),
+              ),
+
+            // 回复阶段（正文流式输出）
+            if (!isThinking && (hasContent || !hasThinking))
+              Container(
+                margin: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: lumiColors.messageBubbleAI,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                    bottomLeft: Radius.circular(4),
+                    bottomRight: Radius.circular(20),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: lumiColors.shadowColor.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        hasContent ? contentText! : '正在组织语言...',
+                        style: TextStyle(
+                          color: hasContent
+                              ? lumiColors.textTertiary
+                              : colorScheme.primary.withValues(alpha: 0.6),
+                          fontSize: 15,
+                          height: 1.4,
+                          fontStyle: hasContent
+                              ? FontStyle.normal
+                              : FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const _BlinkingCursor(),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// 实时思考卡片（流式阶段）
+class _LiveThinkingCard extends StatelessWidget {
+  final String? thinkingText;
+  final bool isStreaming;
+
+  const _LiveThinkingCard({
+    required this.thinkingText,
+    required this.isStreaming,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final hasText = thinkingText != null && thinkingText!.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: colorScheme.secondary.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.auto_awesome_rounded,
+                size: 16,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                isStreaming ? '正在思考中...' : '思考过程',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.primary,
+                ),
+              ),
+              if (isStreaming) ...[
+                const SizedBox(width: 6),
+                SizedBox(
+                  width: 10,
+                  height: 10,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.5,
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (hasText) ...[
+            const SizedBox(height: 6),
+            Text(
+              thinkingText!,
+              maxLines: 8,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                color: const Color(0xFF666666),
+                height: 1.4,
+                fontFamily: 'monospace',
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// 可折叠思考过程面板（已完成历史消息使用）
+class _ThinkingAccordion extends StatefulWidget {
+  final String thinkingContent;
+  final bool initiallyExpanded;
+
+  const _ThinkingAccordion({
+    required this.thinkingContent,
+    this.initiallyExpanded = false,
+  });
+
+  @override
+  State<_ThinkingAccordion> createState() => _ThinkingAccordionState();
+}
+
+class _ThinkingAccordionState extends State<_ThinkingAccordion> {
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = widget.initiallyExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.secondary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: colorScheme.primary.withValues(alpha: 0.15),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.auto_awesome_rounded,
+                    size: 14,
+                    color: colorScheme.primary.withValues(alpha: 0.8),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _expanded ? '收起思考过程' : '查看思考过程',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: colorScheme.primary.withValues(alpha: 0.85),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 16,
+                    color: colorScheme.primary.withValues(alpha: 0.8),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  widget.thinkingContent,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: Color(0xFF555555),
+                    height: 1.4,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// 闪烁光标组件
+class _BlinkingCursor extends StatefulWidget {
+  const _BlinkingCursor();
+
+  @override
+  State<_BlinkingCursor> createState() => _BlinkingCursorState();
+}
+
+class _BlinkingCursorState extends State<_BlinkingCursor>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return FadeTransition(
+      opacity: _controller,
+      child: Container(
+        width: 7,
+        height: 14,
+        margin: const EdgeInsets.only(bottom: 2),
+        decoration: BoxDecoration(
+          color: colorScheme.primary,
+          borderRadius: BorderRadius.circular(1.5),
+        ),
+      ),
+    );
   }
 }
